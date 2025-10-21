@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2025.10.20
+  Changes:
+    - Initial release, forked from "QualityPlus" mod
+---------------------------------------------------------------------------------------------------
+Version: 0.1.4
+Date: 2025.03.08
+  Changes:
+    - fix normal quality having wrong probability boost
+---------------------------------------------------------------------------------------------------
+Version: 0.1.3
+Date: 2024.12.03
+  Changes:
+    - make mod compatible with others that remove quality techs
+---------------------------------------------------------------------------------------------------
+Version: 0.1.2
+Date: 2024.10.28
+  Changes:
+    - fixed resource drain and other modifiers on Epic+ tiers and above
+    - update tech dependencies to make epic tech dependant on rare unlock
+---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 2024.10.18
+  Changes:
+    - updated color of normal+ text to be darker
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2024.10.18
+  Changes:
+    - initial release
