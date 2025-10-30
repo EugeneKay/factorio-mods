@@ -1,4 +1,8 @@
+--
+-- Data Stage
+--
 
+--Functions
 function getPlusIcon(name, tint)
 return
 {
@@ -7,15 +11,22 @@ return
 }
 end
 
-local nextProbability = 0.2
+-- Settings
+local nextProbability = settings.startup["quality-curve-next-probability"].value / 100
 
+-- Constants
+data.raw["utility-constants"].default.maximum_quality_jump = settings.startup["quality-curve-max-jump"].value
+
+-- Normal
 local normal = data.raw.quality.normal
 normal.next_probability = nextProbability
 
+--Uncommon
 local uncommon = data.raw.quality.uncommon
 uncommon.next = "uncommon-plus-1"
 uncommon.next_probability = nextProbability
 
+--Uncommon+
 data:extend(
 {
     {
@@ -41,10 +52,12 @@ data:extend(
 }
 )
 
+--Rare
 local rare = data.raw.quality.rare
 rare.next = "rare-plus-1"
 rare.next_probability = nextProbability
 
+--Rare+
 data:extend(
 {
     {
@@ -69,6 +82,8 @@ data:extend(
     }
 }
 )
+
+--Rare++
 data:extend(
 {
     {
@@ -94,10 +109,12 @@ data:extend(
 }
 )
 
+--Epic
 local epic = data.raw.quality.epic
 epic.next = "epic-plus-1"
 epic.next_probability = nextProbability
 
+--Epic+
 data:extend(
 {
     {
@@ -123,6 +140,7 @@ data:extend(
 }
 )
 
+--Epic++
 data:extend(
 {
     {
@@ -148,6 +166,7 @@ data:extend(
 }
 )
 
+--Epic+++
 data:extend(
 {
     {
@@ -173,6 +192,9 @@ data:extend(
 }
 )
 
+--Legendary (no changes)
+
+--Technology 1
 local qualityModuleTech = data.raw.technology["quality-module"]
 for _, effect in pairs(qualityModuleTech.effects) do
 	if effect.quality == "rare" then
@@ -186,6 +208,7 @@ table.insert(qualityModuleTech.effects,
 }
 )
 
+--Technology 2
 local epicTech = data.raw.technology["epic-quality"]
 for _, effect in pairs(epicTech.effects) do
 	if effect.quality == "epic" then
@@ -205,6 +228,7 @@ table.insert(epicTech.effects,
 }
 )
 
+--Technology 3
 local legendaryTech = data.raw.technology["legendary-quality"]
 for _, effect in pairs(legendaryTech.effects) do
 	if effect.quality == "legendary" then

@@ -1,11 +1,16 @@
 {
   "name": "QualityCurve",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "factorio_version": "2.0",
   "title": "Quality Curve",
   "author": "eugenekay",
   "contact": "",
-  "homepage": "",
-  "description": "This mod makes higher Quality levels harder to obtain.",
-  "dependencies": ["base >= 2.0", "quality >= 2.0"]
+  "homepage": "https://github.com/EugeneKay/factorio-mods/tree/main/QualityCurve",
+  "description": "Higher Quality levels are harder to obtain.",
+  "dependencies": [
+    "base >= 2.0.69",
+    "quality >= 2.0.69",
+    "!QualityPlus",
+    "!Quality-Plus-Plus"
+  ]
 }
