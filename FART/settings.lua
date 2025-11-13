@@ -1,4 +1,4 @@
-local prefix = "farl_"
+local prefix = "fart_"
 data:extend({
     {
         type = "bool-setting",

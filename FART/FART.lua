@@ -1,14 +1,13 @@
 require "__core__/lualib/util"
-local Position = require '__FARL__/stdlib/area/position'
-local Area = require '__FARL__/stdlib/area/area'
-local Blueprint = require "__FARL__/Blueprint"
+local Position = require '__FART__/stdlib/area/position'
+local Area = require '__FART__/stdlib/area/area'
+local Blueprint = require "__FART__/Blueprint"
 
-local lib = require "__FARL__/lib_control"
+local lib = require "__FART__/lib_control"
 local debugDump = lib.debugDump
 local debugLog = lib.debugLog
 local endsWith = lib.endsWith
 local diagonal_to_real_pos = lib.diagonal_to_real_pos
---local saveVar = lib.saveVar
 
 local math = math
 local floor, ceil = math.floor, math.ceil
@@ -93,8 +92,8 @@ end
 local RED = { r = 0.9 }
 local GREEN = { g = 0.7 }
 local YELLOW = { r = 0.8, g = 0.8 }
-FARL = {}--luacheck: allow defined
-FARL.curvePositions = {
+FART = {}--luacheck: allow defined
+FART.curvePositions = {
     [0] = { straight = { dir = 0, off = { x = 1, y = 3 } }, diagonal = { dir = 5, off = { x = -1, y = -3 } } },
     [1] = { straight = { dir = 0, off = { x = -1, y = 3 } }, diagonal = { dir = 3, off = { x = 1, y = -3 } } },
     [2] = { straight = { dir = 2, off = { x = -3, y = 1 } }, diagonal = { dir = 7, off = { x = 3, y = -1 } } },
@@ -105,11 +104,11 @@ FARL.curvePositions = {
     [7] = { straight = { dir = 2, off = { x = 3, y = 1 } }, diagonal = { dir = 1, off = { x = -3, y = -1 } } }
 }
 --local direction ={ N=0, NE=1, E=2, SE=3, S=4, SW=5, W=6, NW=7}
-FARL.input2dir = { [0] = -1, [1] = 0, [2] = 1 }
+FART.input2dir = { [0] = -1, [1] = 0, [2] = 1 }
 
 --[traveldir] ={[raildir]
 -- TODO use this to get corresponding rail, instead of relying on the array order to be the same for rails and signals (messed up by 180° rotation)
-FARL.signalOffset =
+FART.signalOffset =
     {
         [0] = {
             [0] = { pos = { x = 1.5, y = 0.5 }, dir = 4 }
@@ -141,7 +140,7 @@ FARL.signalOffset =
         },
     }
 
-FARL.real_signalOffset =
+FART.real_signalOffset =
     {
         [0] = {
             [0] = { x = 1.5, y = 0.5 }
@@ -191,7 +190,7 @@ end
 
 local function get_signal_for_rail(rail, traveldir, end_of_rail)
     local rail_pos = diagonal_to_real_pos(rail)
-    local offset = FARL.real_signalOffset[traveldir][rail.direction]
+    local offset = FART.real_signalOffset[traveldir][rail.direction]
     local pos = Position.add(rail_pos, offset)
     local dir = (traveldir + 4) % 8
     local signal = { name = "rail-signal", position = pos, direction = dir }
@@ -204,29 +203,29 @@ local function get_signal_for_rail(rail, traveldir, end_of_rail)
     return signal
 end
 
-FARL.find_entities_filtered = function(self, args, from)
+FART.find_entities_filtered = function(self, args, from)
 
     log(game.tick .. " " .. from .. " " .. serpent.line(args, {comment=false}) .. " found: " .. self.surface.count_entities_filtered(args))
 
     return self.surface.find_entities_filtered(args)
 end
 
-FARL.getIdFromTrain = function(train)
+FART.getIdFromTrain = function(train)
     if train and train.valid and train.locomotives then
         return #train.locomotives.front_movers > 0 and train.locomotives.front_movers[1].unit_number or train.locomotives.back_movers[1].unit_number
     end
 end
 
-FARL.isFARLLocomotive = function(loco)
+FART.isFARTLocomotive = function(loco)
     if not loco or not loco.valid or not loco.type == "locomotive" then
         return false
     end
-    if loco.name == "farl" or loco.name == "farl-mu" then
+    if loco.name == "fart" or loco.name == "fart-mu" then
         return true
     end
     if loco.grid then
         for _, equipment in pairs(loco.grid.equipment) do
-            if equipment.name == "farl-roboport" then
+            if equipment.name == "fart-roboport" then
                 return true
             end
         end
@@ -234,7 +233,7 @@ FARL.isFARLLocomotive = function(loco)
     return false
 end
 
-FARL.newByLocomotive = function(loco)
+FART.newByLocomotive = function(loco)
     local new = {
         locomotive = loco,
         train = loco.train,
@@ -251,72 +250,72 @@ FARL.newByLocomotive = function(loco)
         concrete_queue = {},
         rail_queue = {},
     }
-    setmetatable(new, { __index = FARL })
-    local idLoco = FARL.getIdFromTrain(loco.train)
-    global.farl[idLoco] = new
+    setmetatable(new, { __index = FART })
+    local idLoco = FART.getIdFromTrain(loco.train)
+    storage.fart[idLoco] = new
     return new
 end
 
-FARL.new = function(player)
-    local farl = FARL.newByLocomotive(player.vehicle)
-    farl.driver = player
-    farl.cheat_mode = player.cheat_mode
-    farl.settings = Settings.loadByPlayer(player)
-    return farl
+FART.new = function(player)
+    local fart = FART.newByLocomotive(player.vehicle)
+    fart.driver = player
+    fart.cheat_mode = player.cheat_mode
+    fart.settings = Settings.loadByPlayer(player)
+    return fart
 end
 
-FARL.setup = function(loco)
-    local farl = FARL.findByLocomotive(loco)
-    if farl then
-        if not farl.active then
-            farl.train = loco.train
-            farl.frontmover = false
-            farl.locomotive = loco
-            for _, l in pairs(farl.train.locomotives.front_movers) do
+FART.setup = function(loco)
+    local fart = FART.findByLocomotive(loco)
+    if fart then
+        if not fart.active then
+            fart.train = loco.train
+            fart.frontmover = false
+            fart.locomotive = loco
+            for _, l in pairs(fart.train.locomotives.front_movers) do
                 if l == loco then
-                    farl.frontmover = true
+                    fart.frontmover = true
                     break
                 end
             end
         end
-        farl.max_speed = math.huge
-        farl.max_speed_loco = false
-        for _, l in pairs(farl.train.locomotives.front_movers) do
-            if l.prototype.speed < farl.max_speed then
-                farl.max_speed = l.prototype.speed
-                farl.max_speed_burner = l.burner
+        fart.max_speed = math.huge
+        fart.max_speed_loco = false
+        for _, l in pairs(fart.train.locomotives.front_movers) do
+            if l.prototype.speed < fart.max_speed then
+                fart.max_speed = l.prototype.speed
+                fart.max_speed_burner = l.burner
             end
 
         end
-        for _, l in pairs(farl.train.locomotives.back_movers) do
-            farl.max_speed = l.prototype.speed < farl.max_speed and l.prototype.speed or farl.max_speed
+        for _, l in pairs(fart.train.locomotives.back_movers) do
+            fart.max_speed = l.prototype.speed < fart.max_speed and l.prototype.speed or fart.max_speed
         end
-        --log('max :' .. farl.max_speed)
+        --log('max :' .. fart.max_speed)
     end
-    return farl
+    return fart
 end
 
-FARL.onPlayerEnter = function(player, loco)
-    --TODO fix train/farl tracking
+FART.onPlayerEnter = function(player, loco)
+    --TODO fix train/fart tracking
     local status, err = pcall(function()
-        local farl = FARL.setup(loco or player.vehicle)
-        if farl and not farl.active then
-            farl.driver = player
-            farl.settings = Settings.loadByPlayer(player)
-            farl.cheat_mode = player.cheat_mode
-            farl.read_blueprints = 0
+        local fart = FART.setup(loco or player.vehicle)
+        if fart and not fart.active then
+            fart.driver = player
+            fart.settings = Settings.loadByPlayer(player)
+            fart.cheat_mode = player.cheat_mode
+            fart.read_blueprints = 0
 
-            if farl.settings.bulldozer and not farl:bulldozerModeAllowed() then
-                farl.settings.bulldozer = false
-                farl:print({ "msg-bulldozer-error" })
-                farl:print({ "msg-bulldozer-disabled" })
+            if fart.settings.bulldozer and not fart:bulldozerModeAllowed() then
+                fart.settings.bulldozer = false
+                fart:print({ "msg-bulldozer-error" })
+                fart:print({ "msg-bulldozer-disabled" })
             end
-            if remote.interfaces.YARM and remote.interfaces.YARM.hide_expando and player.name ~= "farl_player" then
-                farl.settings.YARM_old_expando = remote.call("YARM", "hide_expando", player.index)
+            if remote.interfaces.YARM and remote.interfaces.YARM.hide_expando and player.name ~= "fart_player" then
+                fart.settings.YARM_old_expando = remote.call("YARM", "hide_expando", player.index)
             end
-            global.activeFarls[FARL.getIdFromTrain(farl.train)] = farl
-            farl.settings.cruiseSpeed = farl.settings.fullCruise and farl.train.max_forward_speed or 0.4
-            return farl
+            storage.activeFarls[FART.getIdFromTrain(fart.train)] = fart
+            fart.settings.cruiseSpeed = fart.settings.fullCruise and fart.train.max_forward_speed or 0.4
+            return fart
         end
     end)
     if not status then
@@ -327,20 +326,20 @@ FARL.onPlayerEnter = function(player, loco)
     end
 end
 
-FARL.onPlayerLeave = function(player)
-    --TODO fix train/farl tracking
+FART.onPlayerLeave = function(player)
+    --TODO fix train/fart tracking
     local status, err = pcall(function()
-        for _, f in pairs(global.farl) do
+        for _, f in pairs(storage.fart) do
             if f.driver and f.driver == player then
                 f:deactivate()
-                global.activeFarls[FARL.getIdFromTrain(f.train)] = nil
+                storage.activeFarls[FART.getIdFromTrain(f.train)] = nil
                 f.driver = false
                 f.lastMove = nil
                 f.railBelow = nil
                 f.next_rail = nil
                 f.read_blueprints = 0
 
-                if remote.interfaces.YARM and remote.interfaces.YARM.show_expando and f.settings.YARM_old_expando and player.name ~= "farl_player" then
+                if remote.interfaces.YARM and remote.interfaces.YARM.show_expando and f.settings.YARM_old_expando and player.name ~= "fart_player" then
                     remote.call("YARM", "show_expando", player.index)
                 end
                 --f.settings = false
@@ -356,36 +355,36 @@ FARL.onPlayerLeave = function(player)
     --apiCalls = {find={item=0,tree=0,stone=0,other=0},canplace=0,create=0,count={item=0,tree=0,stone=0,other=0}}
 end
 
-FARL.findByLocomotive = function(loco)
-    local idLoco = FARL.getIdFromTrain(loco.train)
-    return global.farl[idLoco] or FARL.newByLocomotive(loco)
+FART.findByLocomotive = function(loco)
+    local idLoco = FART.getIdFromTrain(loco.train)
+    return storage.fart[idLoco] or FART.newByLocomotive(loco)
 end
 
-FARL.findByPlayer = function(player)
-    local farl
+FART.findByPlayer = function(player)
+    local fart
     if player.vehicle then
-        local id = FARL.getIdFromTrain(player.vehicle.train)
-        farl = global.farl[id]
-        if farl and farl.locomotive == player.vehicle then
-            farl.driver = player
-            return farl
+        local id = FART.getIdFromTrain(player.vehicle.train)
+        fart = storage.fart[id]
+        if fart and fart.locomotive == player.vehicle then
+            fart.driver = player
+            return fart
         else
-            return FARL.new(player)
+            return FART.new(player)
         end
     else
-        if player.opened and FARL.isFARLLocomotive(player.opened) then
-            farl = global.farl[player.opened.unit_number]
-            if farl and farl.locomotive == player.opened then
-                return farl
+        if player.opened and FART.isFARTLocomotive(player.opened) then
+            fart = storage.fart[player.opened.unit_number]
+            if fart and fart.locomotive == player.opened then
+                return fart
             else
-                return FARL.newByLocomotive(player.opened)
+                return FART.newByLocomotive(player.opened)
             end
         end
     end
     return false
 end
 
-FARL.update = function(self, _)
+FART.update = function(self, _)
     if not self.driver then
         return
     end
@@ -394,15 +393,15 @@ FARL.update = function(self, _)
             self.train = self.locomotive.train
         else
             --self:deactivate("Error (invalid train)2")
-            for i, farl in pairs(global.activeFarls) do
-                if not farl.train or (farl.train and not farl.train.valid) then
-                    if farl.driver and farl.driver.valid then
-                        GUI.destroyGui(farl.driver)
+            for i, fart in pairs(storage.activeFarls) do
+                if not fart.train or (fart.train and not fart.train.valid) then
+                    if fart.driver and fart.driver.valid then
+                        GUI.destroyGui(fart.driver)
                     end
                     log("Error update (invalid train): " .. i .. " tick: " .. game.tick)
-                    farl:deactivate("Error (invalid train): " .. i .. " tick: " .. game.tick)
-                    global.activeFarls[i] = nil
-                    global.farl[i] = nil
+                    fart:deactivate("Error (invalid train): " .. i .. " tick: " .. game.tick)
+                    storage.activeFarls[i] = nil
+                    storage.fart[i] = nil
                 end
             end
             return true
@@ -451,7 +450,7 @@ FARL.update = function(self, _)
                     if self.lastCurve.dist < self.lastCurve.curveblock then
                         self.input = 1
                         --deactivate if it's a scripted player, as the path gets messed up
-                        if self.ghostPath or self.driver.name == "farl_player" then
+                        if self.ghostPath or self.driver.name == "fart_player" then
                             self:deactivate("Curves to close to each other.")
                             return true
                         end
@@ -556,7 +555,7 @@ FARL.update = function(self, _)
                                 self.lastCheckPole = bestpole.p
                                 self.lastCheckDir = bestpole.dir
                                 self.lastCheckRail = bestrail
-                                --if global.debug_log then
+                                --if storage.debug_log then
                                 --self:flyingText2("bp", RED, true, bestpole.p)
                                 --self:flyingText2("br", RED, true, bestrail.position)
                                 --end
@@ -658,7 +657,7 @@ FARL.update = function(self, _)
     end
 end
 
-FARL.show_path = function(self)
+FART.show_path = function(self)
     for i = 1, #self.path do
         self:flyingText2(i, RED, true, diagonal_to_real_pos(self.path[i].rail))
         --self:flyingText(i..":"..self.path[i].travel_dir, RED, true, self.path[i].rail.position)
@@ -666,7 +665,7 @@ FARL.show_path = function(self)
     end
 end
 
-FARL.createBoundingBox = function(self, rail, direction)
+FART.createBoundingBox = function(self, rail, direction)
     local bb = direction % 2 == 1 and self.settings.activeBP.diagonal.boundingBox or self.settings.activeBP.straight.boundingBox
     local realpos = diagonal_to_real_pos(rail)
     local area = {
@@ -679,7 +678,7 @@ FARL.createBoundingBox = function(self, rail, direction)
 end
 
 --prepare an area for entity so it can be placed
-FARL.prepareArea = function(self, entity, rangeOrArea)
+FART.prepareArea = function(self, entity, rangeOrArea)
     local pos = entity.position
     local area = (type(rangeOrArea) == "table") and rangeOrArea or false
     local range = (type(rangeOrArea) ~= "number") and 1.5 or 0.5
@@ -702,8 +701,8 @@ FARL.prepareArea = function(self, entity, rangeOrArea)
     return self:genericCanPlace(entity)
 end
 
-FARL.prepareAreaForCurve = function(self, newRail)
-    local areas = FARL.clearAreas[newRail.direction % 4]
+FART.prepareAreaForCurve = function(self, newRail)
+    local areas = FART.clearAreas[newRail.direction % 4]
     for i = 1, 2 do
         local area = areas[i]
         local tl, lr = Position.add(newRail.position, area[1]), Position.add(newRail.position, area[2])
@@ -724,15 +723,15 @@ FARL.prepareAreaForCurve = function(self, newRail)
     end
 end
 
-FARL.removeTrees = function(self, area)
+FART.removeTrees = function(self, area)
     --apiCalls.count.tree = apiCalls.count.tree + 1
     local amount, name, proto
     local random = math.random
     --log(game.tick .. ' removeTrees start ' .. tostring(self.surface.count_entities_filtered { area = area, type = "tree" }))
     for _, entity in pairs(self.surface.find_entities_filtered { area = area, type = "tree" }) do
         --for _, entity in pairs(self:find_entities_filtered({ area = area, type = "tree" }, "removeTrees")) do
-        local stat = global.statistics[self.locomotive.force.name].removed["tree-01"] or 0
-        global.statistics[self.locomotive.force.name].removed["tree-01"] = stat + 1
+        local stat = storage.statistics[self.locomotive.force.name].removed["tree-01"] or 0
+        storage.statistics[self.locomotive.force.name].removed["tree-01"] = stat + 1
         proto = entity.prototype.mineable_properties
         if proto and proto.minable and proto.products and (not self.cheat_mode) and self.settings.collectWood then
             local products = proto.products
@@ -775,7 +774,7 @@ FARL.removeTrees = function(self, area)
     --log(game.tick .. ' removeTrees end')
 end
 
-FARL.removeCreep = function(self, area)
+FART.removeCreep = function(self, area)
     if self.surface.count_tiles_filtered{area = area, name = "kr-creep"} > 0 then
         local tiles = {}
         local tiles_filtered = self.surface.find_tiles_filtered{area = area, name = "kr-creep"}
@@ -796,7 +795,7 @@ FARL.removeCreep = function(self, area)
     end
 end
 
-FARL.removeStone = function(self, area)
+FART.removeStone = function(self, area)
     self:removeCreep(area)
     local amount, name, proto
     local random = math.random
@@ -834,14 +833,14 @@ FARL.removeStone = function(self, area)
                         end
                     end
                 end
-                local stat = global.statistics[self.locomotive.force.name].removed["stone-rock"] or 0
-                global.statistics[self.locomotive.force.name].removed["stone-rock"] = stat + 1
+                local stat = storage.statistics[self.locomotive.force.name].removed["stone-rock"] or 0
+                storage.statistics[self.locomotive.force.name].removed["stone-rock"] = stat + 1
             end
         end
     end
 end
 
-FARL.removeCliffs = function(self, area)
+FART.removeCliffs = function(self, area)
     if not self.settings.remove_cliffs then
         return
     end
@@ -852,8 +851,8 @@ FARL.removeCliffs = function(self, area)
     local amount = ceil(#cliffs / 3)
     local explosives = self:getCargoCount("cliff-explosives")
     if explosives >= amount then
-        local stat = global.statistics[self.locomotive.force.name].removed["cliff"] or 0
-        global.statistics[self.locomotive.force.name].removed["cliff"] = stat + #cliffs
+        local stat = storage.statistics[self.locomotive.force.name].removed["cliff"] or 0
+        storage.statistics[self.locomotive.force.name].removed["cliff"] = stat + #cliffs
         local removed = 0
         for _, entity in pairs(cliffs) do
             if entity.destroy({do_cliff_correction = true}) then
@@ -869,7 +868,7 @@ end
 
 -- args = {area=area, name="name"} or {area=area,type="type"}
 -- exclude: table with entities as keys
-FARL.removeEntitiesFiltered = function(self, args)
+FART.removeEntitiesFiltered = function(self, args)
     local force = self.locomotive.force
     local neutral_force = game.forces.neutral
     local count
@@ -896,15 +895,15 @@ FARL.removeEntitiesFiltered = function(self, args)
             else
                 if item and name ~= "concrete-lamp" then
                     self:addItemToCargo(item, count)
-                    local stat = global.statistics[self.locomotive.force.name].removed[item] or 0
-                    global.statistics[self.locomotive.force.name].removed[item] = stat + 1
+                    local stat = storage.statistics[self.locomotive.force.name].removed[item] or 0
+                    storage.statistics[self.locomotive.force.name].removed[item] = stat + 1
                 end
             end
         end
     end
 end
 
-FARL.fillWater = function(self, area)
+FART.fillWater = function(self, area)
     local status, err = pcall(function()
         -- check if bridging is turned on in settings
         if self.settings.bridge then
@@ -942,13 +941,13 @@ FARL.fillWater = function(self, area)
     end
 end
 
-FARL.replaceWater = function(self, tiles, w, dw)
+FART.replaceWater = function(self, tiles, w, dw)
     -- check to make sure water tiles were found
     if #tiles ~= 0 then
         -- if they were calculate the minimum number of landfills to fill them in ( quick and dirty at the moment may need tweeking to prevent overusage)
         local lfills = ceil(w / 2 + dw * 1.5)
         lfills = lfills > 20 and 20 or lfills
-        -- check to make sure there is enough landfill in the FARL and if there is apply the changes, remove landfill.  if not then show error message
+        -- check to make sure there is enough landfill in the FART and if there is apply the changes, remove landfill.  if not then show error message
         if self:getCargoCount("landfill") >= lfills then
             self.surface.set_tiles(tiles, true, true, true, true)
             self:removeItemFromCargo("landfill", lfills)
@@ -957,7 +956,7 @@ FARL.replaceWater = function(self, tiles, w, dw)
     end
 end
 
-FARL.placeConcrete = function(self, dir, rail)
+FART.placeConcrete = function(self, dir, rail)
     if rail.type == "curved-rail" then return end
     local type = rail.direction % 2 == 1 and "diagonal" or "straight"
     local concrete = self.settings.activeBP[type].concrete
@@ -1030,8 +1029,8 @@ FARL.placeConcrete = function(self, dir, rail)
             if c > 0 then
                 self.surface.set_tiles(p)
                 self:removeItemFromCargo(name, c, cargo_count)
-                local stat = global.statistics[self.locomotive.force.name].created[name] or 0
-                global.statistics[self.locomotive.force.name].created[name] = stat + c
+                local stat = storage.statistics[self.locomotive.force.name].created[name] or 0
+                storage.statistics[self.locomotive.force.name].created[name] = stat + c
             end
         end
     end
@@ -1046,7 +1045,7 @@ end
 --     return tile_prototypes[tileName]
 -- end
 
-FARL.removeConcrete = function(self, area)
+FART.removeConcrete = function(self, area)
     local status, err = pcall(function()
         area = Area.round_to_integer(area)
         local options = {area = area, has_hidden_tile = true, collision_mask = "ground-tile"}
@@ -1079,8 +1078,8 @@ FARL.removeConcrete = function(self, area)
                 local item = get_item_name(name)
                 if item then
                     self:addItemToCargo(item, c, true)
-                    local stat = global.statistics[self.locomotive.force.name].removed[item] or 0
-                    global.statistics[self.locomotive.force.name].removed[item] = stat + c
+                    local stat = storage.statistics[self.locomotive.force.name].removed[item] or 0
+                    storage.statistics[self.locomotive.force.name].removed[item] = stat + c
                 end
             end
         end
@@ -1090,7 +1089,7 @@ FARL.removeConcrete = function(self, area)
     end
 end
 
-FARL.pickupItems = function(self, area)
+FART.pickupItems = function(self, area)
     --apiCalls.count.item = apiCalls.count.item + 1
     if self.surface.count_entities_filtered { area = area, name = "item-on-ground" } > 0 then
         --apiCalls.find.item = apiCalls.find.item + 1
@@ -1102,7 +1101,7 @@ FARL.pickupItems = function(self, area)
     end
 end
 
-FARL.find_tile = function(self, sarea1, sarea2, travel_dir)
+FART.find_tile = function(self, sarea1, sarea2, travel_dir)
     local tpos1 = move_right_forward(sarea1, travel_dir, -1, 0)
     local tpos2 = move_right_forward(sarea2, travel_dir, 1, 0)
     local tile1 = self.surface.get_tile(tpos1.x, tpos1.y)
@@ -1127,7 +1126,7 @@ FARL.find_tile = function(self, sarea1, sarea2, travel_dir)
     return found
 end
 
-FARL.bulldoze_area = function(self, rail, travel_dir)
+FART.bulldoze_area = function(self, rail, travel_dir)
     if rail.type == "curved-rail" then
         self:prepareAreaForCurve(rail)
         return
@@ -1163,7 +1162,7 @@ FARL.bulldoze_area = function(self, rail, travel_dir)
     end
 end
 
-FARL.getRail = function(self, lastRail, travelDir, input)
+FART.getRail = function(self, lastRail, travelDir, input)
     if not travelDir or not input then error("no traveldir or input", 2) end
     if travelDir > 7 or travelDir < 0 then
         self:deactivate("Traveldir wrong: " .. travelDir)
@@ -1174,7 +1173,7 @@ FARL.getRail = function(self, lastRail, travelDir, input)
         return travelDir, false
     end
     if not lastRail then error("no lastRail", 2) end
-    local data = FARL.input_to_next_rail[travelDir][lastRail.type]
+    local data = FART.input_to_next_rail[travelDir][lastRail.type]
     if not data then error("no data", 2) end
     if not data[lastRail.direction] or not data[lastRail.direction][input] then
         if not data[lastRail.direction] then
@@ -1185,11 +1184,11 @@ FARL.getRail = function(self, lastRail, travelDir, input)
     data = data[lastRail.direction][input]
 
     local name = data.type == "straight-rail" and self.settings.rail.straight or self.settings.rail.curved
-    local newTravelDir = (travelDir + FARL.input2dir[input]) % 8
+    local newTravelDir = (travelDir + FART.input2dir[input]) % 8
     return newTravelDir, { name = name, position = Position.add(lastRail.position, data.offset), direction = data.direction, type = data.type }
 end
 
-FARL.getGhostRail = function(self, lastRail, travelDir, input)
+FART.getGhostRail = function(self, lastRail, travelDir, input)
     if not travelDir or not input then error("no traveldir or input", 2) end
     if travelDir > 7 or travelDir < 0 then
         self:deactivate("Traveldir wrong: " .. travelDir)
@@ -1200,7 +1199,7 @@ FARL.getGhostRail = function(self, lastRail, travelDir, input)
         return travelDir, false
     end
     if not lastRail then error("no lastRail", 2) end
-    local data = FARL.input_to_next_rail[travelDir][lastRail.ghost_type]
+    local data = FART.input_to_next_rail[travelDir][lastRail.ghost_type]
     if not data then error("no data", 2) end
     if not data[lastRail.direction] or not data[lastRail.direction][input] then
         if not data[lastRail.direction] then
@@ -1211,13 +1210,13 @@ FARL.getGhostRail = function(self, lastRail, travelDir, input)
     data = data[lastRail.direction][input]
 
     local name = data.type == "straight-rail" and self.settings.rail.straight or self.settings.rail.curved
-    local newTravelDir = (travelDir + FARL.input2dir[input]) % 8
+    local newTravelDir = (travelDir + FART.input2dir[input]) % 8
     return newTravelDir, { name = "entity-ghost", ghost_name = name, ghost_type = data.type, position = Position.add(lastRail.position, data.offset),
         direction = data.direction, type = "entity-ghost"
     }
 end
 
-FARL.cruiseControl = function(self)
+FART.cruiseControl = function(self)
     local acc = self.frontmover and defines.riding.acceleration.accelerating or defines.riding.acceleration.reversing
     local decc = self.frontmover and defines.riding.acceleration.reversing or defines.riding.acceleration.accelerating
     local speed = abs(self.train.speed)
@@ -1237,7 +1236,7 @@ FARL.cruiseControl = function(self)
     end
 end
 
-FARL.findNeighbours = function(self, rail, travelDir)
+FART.findNeighbours = function(self, rail, travelDir)
     local paths = {}
     local found = false
     if not travelDir then error("no travelDir", 2) end
@@ -1260,7 +1259,7 @@ FARL.findNeighbours = function(self, rail, travelDir)
     return found and paths or false
 end
 
-FARL.findNeighbour = function(self, rail, travelDir, input)
+FART.findNeighbour = function(self, rail, travelDir, input)
     local neighbour = false
     local _, nrail = self:getRail(rail, travelDir, input)
     if nrail then
@@ -1272,7 +1271,7 @@ FARL.findNeighbour = function(self, rail, travelDir, input)
     return neighbour
 end
 
-FARL.findRail = function(self, rail)
+FART.findRail = function(self, rail)
     local area = Position.expand_to_area(rail.position, 0.4)
     local found = false
     for _, r in pairs(self.surface.find_entities_filtered { area = area, type = rail.type }) do
@@ -1284,7 +1283,7 @@ FARL.findRail = function(self, rail)
     return found
 end
 
-FARL.findGhostRail = function(self, rail)
+FART.findGhostRail = function(self, rail)
     local area = Position.expand_to_area(rail.position, 0.4)
     --local found = self.surface.find_entity(rail.name, rail.position)
     for _, r in pairs(self.surface.find_entities_filtered { area = area, name = rail.name }) do
@@ -1294,7 +1293,7 @@ FARL.findGhostRail = function(self, rail)
     end
 end
 
-FARL.calculate_rail_data = function(self)
+FART.calculate_rail_data = function(self)
     local curves = {
         [0] = {
             [0] = { name = "curved-rail", type = "curved-rail", direction = 0, position = { x = 0, y = 0 } },
@@ -1321,7 +1320,7 @@ FARL.calculate_rail_data = function(self)
                 local input = input_self
                 -- invert direction, input, distances for diagonal rails
                 if direction % 2 == 1 then
-                    direction = Position.opposite_direction((direction + FARL.input2dir[input]) % 8)
+                    direction = Position.opposite_direction((direction + FART.input2dir[input]) % 8)
                     input = input == 2 and 0 or 2
                     s_lane = -1 * s_lane
                     d_lane = -1 * d_lane
@@ -1371,7 +1370,7 @@ FARL.calculate_rail_data = function(self)
     end
 end
 
-FARL.activate = function(self, scanForGhosts)
+FART.activate = function(self, scanForGhosts)
     local status, err = pcall(function()
         self.lastrail = false
         self.signalCount = { main = 0 }
@@ -1382,7 +1381,7 @@ FARL.activate = function(self, scanForGhosts)
         self.protected_tiles[self.protected_index] = {}
         self.frontmover = false
         self.last_message = {}
-        if (self.driver and self.driver.name ~= "farl_player") then
+        if (self.driver and self.driver.name ~= "fart_player") then
             self.cheat_mode =  self.driver.cheat_mode or false
         else
             self.cheat_mode = self.startedBy and self.startedBy.cheat_mode or false
@@ -1401,11 +1400,11 @@ FARL.activate = function(self, scanForGhosts)
             self.ghostPath = self:getGhostPath()
         end
         if self.ghostPath then
-            if self.confirmed == nil and self.driver.name ~= "farl_player" then
+            if self.confirmed == nil and self.driver.name ~= "fart_player" then
                 GUI.createPopup(self.driver)
                 return
             end
-            if self.confirmed == true or self.driver.name == "farl_player" then
+            if self.confirmed == true or self.driver.name == "fart_player" then
                 self.ghostProgressStart = #self.ghostPath
                 self.ghostProgress = 0
                 for _, data in pairs(self.ghostPath) do
@@ -1450,7 +1449,7 @@ FARL.activate = function(self, scanForGhosts)
         self.path, _ = self:get_rails_below_train(same_orientation)
         --debugDump(#self.path,true)
         if self.settings.bulldozer then
-            bulldoze_rail = self.frontmover and self.train.back_rail or self.train.front_rail
+            bulldoze_rail = self.frontmover and self.train.back_end.rail or self.train.front_end.rail
             if not same_orientation or bulldoze_rail.type == "curved-rail" then
                 debugDump("Train is on a curve somewhere, train doesn't like!", true)
                 self:deactivate()
@@ -1554,7 +1553,7 @@ FARL.activate = function(self, scanForGhosts)
     end
 end
 
-FARL.find_signal_rail = function(self, rail, travel_dir)
+FART.find_signal_rail = function(self, rail, travel_dir)
     local signal = get_signal_for_rail(rail, travel_dir)
     if not signal then return end
     local signal_dir = signal.direction
@@ -1569,7 +1568,7 @@ FARL.find_signal_rail = function(self, rail, travel_dir)
     end
 end
 
-FARL.get_rails_below_train = function(self, no_limit)
+FART.get_rails_below_train = function(self, no_limit)
     local behind = self:rail_behind_train()
     local front = self:rail_below_train()
     local front_rail_index = 0
@@ -1606,7 +1605,7 @@ FARL.get_rails_below_train = function(self, no_limit)
     return path2, front_rail_index
 end
 
-FARL.deactivate = function(self, reason)
+FART.deactivate = function(self, reason)
     self.active = false
     self.input = nil
     if self.cruise then
@@ -1634,7 +1633,7 @@ FARL.deactivate = function(self, reason)
             self:print({ "", "Error deactivating (ghostPath): ", err })
         end
     end
-    if self.driver and self.driver.name == "farl_player" then
+    if self.driver and self.driver.name == "fart_player" then
         self.driver.destroy()
         self.driver = false
     end
@@ -1661,7 +1660,7 @@ FARL.deactivate = function(self, reason)
     end
 end
 
-FARL.toggleActive = function(self, scanForGhosts)
+FART.toggleActive = function(self, scanForGhosts)
     if not self.active then
         self:activate(scanForGhosts)
         return
@@ -1670,7 +1669,7 @@ FARL.toggleActive = function(self, scanForGhosts)
     end
 end
 
-FARL.toggleCruiseControl = function(self)
+FART.toggleCruiseControl = function(self)
     if not self.cruise then
         if self.driver and self.driver.riding_state then
             self.cruise = true
@@ -1703,11 +1702,11 @@ FARL.toggleCruiseControl = function(self)
     end
 end
 
-FARL.bulldozerModeAllowed = function(self)
-    return (FARL.isFARLLocomotive(self.train.carriages[1]) and FARL.isFARLLocomotive(self.train.carriages[#self.train.carriages]))
+FART.bulldozerModeAllowed = function(self)
+    return (FART.isFARTLocomotive(self.train.carriages[1]) and FART.isFARTLocomotive(self.train.carriages[#self.train.carriages]))
 end
 
-FARL.toggleBulldozer = function(self)
+FART.toggleBulldozer = function(self)
     if self.active then
         self:deactivate({ "msg-changing-modes" })
     end
@@ -1719,7 +1718,7 @@ FARL.toggleBulldozer = function(self)
     self.settings.maintenance = false
 end
 
-FARL.toggleMaintenance = function(self)
+FART.toggleMaintenance = function(self)
     if self.active then
         self:deactivate({ "msg-changing-modes" })
     end
@@ -1727,7 +1726,7 @@ FARL.toggleMaintenance = function(self)
     self.settings.bulldozer = false
 end
 
-FARL.findLastRail = function(self)
+FART.findLastRail = function(self)
     local test = self:rail_below_train()
     local last = test
     local count = 1
@@ -1748,7 +1747,7 @@ FARL.findLastRail = function(self)
     return last
 end
 
-FARL.getGhostPath = function(self)
+FART.getGhostPath = function(self)
     local next = {name = "entity-ghost", ghost_name = self.lastrail.name, ghost_type = self.lastrail.type, position = self.lastrail.position, direction=self.lastrail.direction}
     local dir = self.direction
     local count = 0
@@ -1771,7 +1770,7 @@ FARL.getGhostPath = function(self)
     return #ghostPath > 0 and ghostPath or false
 end
 
-FARL.addItemToCargo = function(self, item, count, place_result)
+FART.addItemToCargo = function(self, item, count, place_result)
     --TODO fix this
     --local original_item = item
     if not item then
@@ -1796,7 +1795,7 @@ FARL.addItemToCargo = function(self, item, count, place_result)
     end
 end
 
-FARL.removeItemFromCargo = function(self, item, count, current_count)
+FART.removeItemFromCargo = function(self, item, count, current_count)
     count = count or 1
     if self.cheat_mode then
         return count
@@ -1810,7 +1809,7 @@ FARL.removeItemFromCargo = function(self, item, count, current_count)
     return removed
 end
 
-FARL.getCargoCount = function(self, item)
+FART.getCargoCount = function(self, item)
     local name = get_item_name(item)
     if self.cheat_mode then return 9001 end
     local count = 0
@@ -1825,7 +1824,7 @@ FARL.getCargoCount = function(self, item)
     return count
 end
 
-FARL.genericCanPlace = function(self, arg)
+FART.genericCanPlace = function(self, arg)
     if not arg.position or not arg.position.x or not arg.position.y then
         error("invalid position", 2)
     elseif not arg.name then
@@ -1842,7 +1841,7 @@ FARL.genericCanPlace = function(self, arg)
     end
 end
 
-FARL.genericPlace = function(self, arg, ignore, place_ghost)
+FART.genericPlace = function(self, arg, ignore, place_ghost)
     --arg.name = is_placer_or_base[arg.name] and "ret-pole-placer" or arg.name
     local canPlace
     if not ignore then
@@ -1858,14 +1857,14 @@ FARL.genericPlace = function(self, arg, ignore, place_ghost)
         if not place_ghost then
             entity = self.surface.create_entity(arg)
         else
-            entity = self.surface.create_entity(FARL.get_ghost(arg))
+            entity = self.surface.create_entity(FART.get_ghost(arg))
         end
         --apiCalls.create = apiCalls.create + 1
     end
     if entity then
         if entity.type ~= "entity_ghost" then
-            local stat = global.statistics[entity.force.name].created[entity.name] or 0
-            global.statistics[entity.force.name].created[entity.name] = stat + 1
+            local stat = storage.statistics[entity.force.name].created[entity.name] or 0
+            storage.statistics[entity.force.name].created[entity.name] = stat + 1
         end
         self:protect(entity)
         --local diff = Position.subtract(arg.position, entity.position)
@@ -1878,7 +1877,7 @@ FARL.genericPlace = function(self, arg, ignore, place_ghost)
     return canPlace, entity
 end
 
-FARL.get_ghost = function(entity)
+FART.get_ghost = function(entity)
     local ghostEntity = table.deepcopy(entity)
     ghostEntity.ghost_name = entity.name
     ghostEntity.name = "entity-ghost"
@@ -1887,9 +1886,9 @@ FARL.get_ghost = function(entity)
 end
 
 --parse blueprints
--- chain signal: needs direction == 4, defines track that FARL drives on
+-- chain signal: needs direction == 4, defines track that FART drives on
 --normal signals: define signal position for other tracks
-FARL.parseBlueprints = function(self, blueprints)
+FART.parseBlueprints = function(self, blueprints)
     for j = 1, #blueprints do
         local e = blueprints[j].get_blueprint_entities()
         if e then
@@ -1902,7 +1901,7 @@ FARL.parseBlueprints = function(self, blueprints)
             if rails == 1 and not offsets.chain then
                 local rail = offsets.rails[1]
                 local traveldir = bpType == "straight" and 0 or 1
-                local c = FARL.signalOffset[traveldir][rail.direction]
+                local c = FART.signalOffset[traveldir][rail.direction]
                 offsets.chain = { direction = c.dir, name = "rail-chain-signal", position = Position.add(rail.position, c.pos) }
             end
             if #poles > 0 then
@@ -2138,7 +2137,7 @@ FARL.parseBlueprints = function(self, blueprints)
     end
 end
 
-FARL.placeRails = function(self, nextRail, newTravelDir)
+FART.placeRails = function(self, nextRail, newTravelDir)
     local newDir = nextRail.direction
     local newRail = get_fake_rail(nextRail)
 
@@ -2194,7 +2193,7 @@ FARL.placeRails = function(self, nextRail, newTravelDir)
     end
 end
 
-FARL.protect = function(self, ent)
+FART.protect = function(self, ent)
     if self.settings.maintenance or self.settings.bulldozer then
         self.protected = self.protected or {}
         self.protected[self.protected_index] = self.protected[self.protected_index] or {}
@@ -2202,7 +2201,7 @@ FARL.protect = function(self, ent)
     end
 end
 
-FARL.protect_tile = function(self, pos_)
+FART.protect_tile = function(self, pos_)
     if self.settings.maintenance or self.settings.bulldozer then
         local pos = { x = pos_.x, y = pos_.y }
         if pos.x - round(pos.x) == 0 then
@@ -2217,7 +2216,7 @@ FARL.protect_tile = function(self, pos_)
     end
 end
 
-FARL.isProtected = function(self, ent)
+FART.isProtected = function(self, ent)
     local key = protectedKey(ent)
     if not self.protected then return false end
     for _, protected in pairs(self.protected) do
@@ -2233,7 +2232,7 @@ FARL.isProtected = function(self, ent)
     return false
 end
 
-FARL.is_protected_tile = function(self, pos_)
+FART.is_protected_tile = function(self, pos_)
     local pos = { x = pos_.x, y = pos_.y }
     if pos.x - round(pos.x) == 0 then
         pos.x = pos.x + 0.5
@@ -2250,7 +2249,7 @@ FARL.is_protected_tile = function(self, pos_)
     return false
 end
 
-FARL.protectRails = function(self, last_, dir_, limit)
+FART.protectRails = function(self, last_, dir_, limit)
     local last, dir = last_, dir_
     local found, c = 0, 0
     while found and c < limit do
@@ -2282,7 +2281,7 @@ FARL.protectRails = function(self, last_, dir_, limit)
     return true
 end
 
-FARL.placeParallelCurve = function(self, traveldir, rail, lane_index)
+FART.placeParallelCurve = function(self, traveldir, rail, lane_index)
     local direction = self.direction
     local input = self.input
     local s_lane = self.settings.activeBP.straight.lanes[lane_index]
@@ -2312,7 +2311,7 @@ FARL.placeParallelCurve = function(self, traveldir, rail, lane_index)
                             self.signalCount[lane_index] = 0
                         end
                     end
-                    --          if global.fake_signals then
+                    --          if storage.fake_signals then
                     --            if self.fake_signal_in and self.fake_signal_in[lane_index] and self.fake_signal_in[lane_index] < 1 and rail.name ~= self.settings.rail.curved then
                     --              if self:place_fake_signal(dir, last, lane_index) then self.fake_signalCount[lane_index] = 0 end
                     --            end
@@ -2333,7 +2332,7 @@ FARL.placeParallelCurve = function(self, traveldir, rail, lane_index)
 
     -- invert direction, input, distances for diagonal rails
     if direction % 2 == 1 then
-        direction = Position.opposite_direction((direction + FARL.input2dir[input]) % 8)
+        direction = Position.opposite_direction((direction + FART.input2dir[input]) % 8)
         input = input == 2 and 0 or 2
         s_lane = -1 * s_lane
         d_lane = -1 * d_lane
@@ -2369,7 +2368,7 @@ FARL.placeParallelCurve = function(self, traveldir, rail, lane_index)
     return self.lastCurve.blocked[lane_index]
 end
 
-FARL.placeParallelTrack = function(self, traveldir, lastRail, lane_index)
+FART.placeParallelTrack = function(self, traveldir, lastRail, lane_index)
     local s_lane = self.settings.activeBP.straight.lanes[lane_index]
     local d_lane = self.settings.activeBP.diagonal.lanes[lane_index]
     local new_rail = get_fake_rail(lastRail)
@@ -2409,7 +2408,7 @@ FARL.placeParallelTrack = function(self, traveldir, lastRail, lane_index)
                 self.signalCount[lane_index] = 0
             end
         end
-        --      if global.fake_signals then
+        --      if storage.fake_signals then
         --        if self.fake_signal_in and self.fake_signal_in[lane_index] and self.fake_signal_in[lane_index] < 1 and rail.name ~= self.settings.rail.curved then
         --          if self:place_fake_signal(traveldir, new_rail, lane_index) then self.fake_signalCount[lane_index] = 0 end
         --        end
@@ -2430,7 +2429,7 @@ FARL.placeParallelTrack = function(self, traveldir, lastRail, lane_index)
     end
 end
 
-FARL.placeParallelSignals = function(self, traveldir, rail, lane_index)
+FART.placeParallelSignals = function(self, traveldir, rail, lane_index)
     --if self.signalCount[lane_index] > self.settings.signalDistance and rail.name ~= self.settings.rail.curved then
     if self.signal_in[lane_index] and self.signal_in[lane_index] < 1 and rail.type ~= "curved-rail" then
         local cargo_count = self:getCargoCount("rail-signal")
@@ -2463,7 +2462,7 @@ FARL.placeParallelSignals = function(self, traveldir, rail, lane_index)
     end
 end
 
-FARL.mirrorEntity = function(pos, traveldir)
+FART.mirrorEntity = function(pos, traveldir)
     local deg = 0
     if traveldir == 0 then deg = 90
     elseif traveldir == 1 then deg = -45
@@ -2483,7 +2482,7 @@ FARL.mirrorEntity = function(pos, traveldir)
     return ret
 end
 
-FARL.calcPole = function(self, lastrail, traveldir)
+FART.calcPole = function(self, lastrail, traveldir)
     local status, err = pcall(function()
         local offset
         if not lastrail then error("no rail", 2) end
@@ -2496,7 +2495,7 @@ FARL.calcPole = function(self, lastrail, traveldir)
             local rad = diff * (math.pi / 4)
             offset = rotate(pos, rad)
             if self.settings.flipPoles then
-                offset = FARL.mirrorEntity(offset, traveldir)
+                offset = FART.mirrorEntity(offset, traveldir)
             end
             if diagonal then
                 local railPos = lib.diagonal_data[lastrail.direction] or { x = 0, y = 0 }
@@ -2516,7 +2515,7 @@ FARL.calcPole = function(self, lastrail, traveldir)
     end
 end
 
-FARL.placePoleEntities = function(self, traveldir, pole)
+FART.placePoleEntities = function(self, traveldir, pole)
     local poleEntities = traveldir % 2 == 0 and self.settings.activeBP.straight.poleEntities or self.settings.activeBP.diagonal.poleEntities
     local diff = traveldir % 2 == 0 and traveldir or traveldir - 1
     local rad = diff * (math.pi / 4)
@@ -2531,7 +2530,7 @@ FARL.placePoleEntities = function(self, traveldir, pole)
                 local pickup_position = poleEntities[i].pickup_position and rotate(poleEntities[i].pickup_position, rad) or nil
                 local drop_position = poleEntities[i].drop_position and rotate(poleEntities[i].drop_position, rad) or nil
                 if self.settings.flipPoles then
-                    offset = FARL.mirrorEntity(offset, traveldir)
+                    offset = FART.mirrorEntity(offset, traveldir)
                 end
                 local pos = Position.add(pole, offset)
                 --debugDump(pos, true)
@@ -2558,7 +2557,7 @@ FARL.placePoleEntities = function(self, traveldir, pole)
     end
 end
 
-FARL.placeRailEntities = function(self, traveldir, rail)
+FART.placeRailEntities = function(self, traveldir, rail)
     local railEntities = traveldir % 2 == 0 and self.settings.activeBP.straight.railEntities or self.settings.activeBP.diagonal.railEntities
     local diff = traveldir % 2 == 0 and traveldir or traveldir - 1
     local rad = diff * (math.pi / 4)
@@ -2589,9 +2588,9 @@ FARL.placeRailEntities = function(self, traveldir, rail)
     end
 end
 
-FARL.connectCCNet = function(self, pole)
+FART.connectCCNet = function(self, pole)
     if self.settings.ccNet and pole.neighbours.copper[1] and self.ccNetPole and self.ccNetPole.valid then
-        if settings.global.farl_free_wires.value
+        if settings.storage.fart_free_wires.value
             or ((self.settings.ccWires == 1 and self:getCargoCount("red-wire") > 0)
                 or (self.settings.ccWires == 2 and self:getCargoCount("green-wire") > 0)
                 or (self.settings.ccWires == 3 and (self:getCargoCount("red-wire") > 0 or self:getCargoCount("green-wire") > 0))) then
@@ -2608,9 +2607,9 @@ FARL.connectCCNet = function(self, pole)
                 items = { "red-wire", "green-wire" }
             end
             for i = 1, #c do
-                if settings.global.farl_free_wires.value or self:getCargoCount(items[i]) > 0 then
+                if settings.storage.fart_free_wires.value or self:getCargoCount(items[i]) > 0 then
                     pole.connect_neighbour({ target_entity = self.ccNetPole, wire = c[i] })
-                    if not settings.global.farl_free_wires.value then
+                    if not settings.storage.fart_free_wires.value then
                         self:removeItemFromCargo(items[i], 1)
                     end
                 end
@@ -2620,7 +2619,7 @@ FARL.connectCCNet = function(self, pole)
     self.ccNetPole = pole
 end
 
-FARL.findClosestPole = function(self, minPos)
+FART.findClosestPole = function(self, minPos)
     local name = self.settings.activeBP.diagonal.pole.name
     local reach = game.entity_prototypes[name].max_wire_distance
     local tmp, ret, minDist = minPos, false, 100
@@ -2635,7 +2634,7 @@ FARL.findClosestPole = function(self, minPos)
     return ret
 end
 
-FARL.getPolePoints = function(self, rail)
+FART.getPolePoints = function(self, rail)
     if not rail then error("no rail", 2) end
     if not rail.r then error("no r", 3) end
     local checks = {}
@@ -2648,7 +2647,7 @@ FARL.getPolePoints = function(self, rail)
     return checks
 end
 
-FARL.getBestPole = function(self, lastPole, rails, travel_dir)
+FART.getBestPole = function(self, lastPole, rails, travel_dir)
     local name = self.settings.activeBP.diagonal.pole.name
     local reach = game.entity_prototypes[name].max_wire_distance
     --if (travel_dir % 2 == 0 and (travel_dir ~= 0 and travel_dir ~= 6)) and reach ~= floor(reach) then
@@ -2678,12 +2677,12 @@ FARL.getBestPole = function(self, lastPole, rails, travel_dir)
     return maxPole, maxRail
 end
 
-FARL.getPoleRails = function(self, rail, newDir, oldDir)
+FART.getPoleRails = function(self, rail, newDir, oldDir)
     local rails
     if rail.type == "curved-rail" then
         --range[1][2] = 0
         --debugDump({old=ptraveldir,new=pnewDir},true)
-        local tracks, tmp = FARL.curvePositions[rail.direction], {}
+        local tracks, tmp = FART.curvePositions[rail.direction], {}
         tmp.d = { name = self.settings.rail.straight, direction = tracks.diagonal.dir, position = Position.add(rail.position, tracks.diagonal.off), type = "straight-rail" }
         tmp.s = { name = self.settings.rail.straight, direction = tracks.straight.dir, position = Position.add(rail.position, tracks.straight.off), type = "straight-rail" }
         local dDir, sDir
@@ -2702,7 +2701,7 @@ FARL.getPoleRails = function(self, rail, newDir, oldDir)
     return rails
 end
 
-FARL.placePole = function(self, polePos, poleDir)
+FART.placePole = function(self, polePos, poleDir)
     local name = self.settings.activeBP.diagonal.pole.name
     --local name = (self.direction % 2 == 1) and self.settings.activeBP.diagonal.pole.name or self.settings.activeBP.straight.pole.name
     --name = is_placer_or_base[name] and "ret-pole-placer" or name
@@ -2759,7 +2758,7 @@ FARL.placePole = function(self, polePos, poleDir)
     end
 end
 
-FARL.placeSignal = function(self, traveldir, rail)
+FART.placeSignal = function(self, traveldir, rail)
     if self.signalCount.main > self.settings.signalDistance and rail.type ~= "curved-rail" then
         local cargo_count = self:getCargoCount("rail-signal")
         local place_ghost = self.settings.place_ghosts and cargo_count == 0
@@ -2791,7 +2790,7 @@ FARL.placeSignal = function(self, traveldir, rail)
     return nil
 end
 
-FARL.place_fake_signal = function(self, traveldir, rail, lane_index)
+FART.place_fake_signal = function(self, traveldir, rail, lane_index)
     if lane_index then
         local signals = traveldir % 2 == 0 and self.settings.activeBP.straight.signals or self.settings.activeBP.diagonal.signals
         if signals and type(signals) == "table" and signals[lane_index] then
@@ -2816,7 +2815,7 @@ FARL.place_fake_signal = function(self, traveldir, rail, lane_index)
     end
 end
 
-FARL.findLastPole = function(self, rail)
+FART.findLastPole = function(self, rail)
     local name = self.settings.activeBP.diagonal.pole.name
     local reach = game.entity_prototypes[name].max_wire_distance
     local min_distance, pole = 900, nil
@@ -2862,7 +2861,7 @@ FARL.findLastPole = function(self, rail)
     end
 end
 
-FARL.debugInfo = function(self)
+FART.debugInfo = function(self)
     local locomotive = self.locomotive
     log(serpent.block(self, {comment=false}))
     log(self.driver.name)
@@ -2875,9 +2874,9 @@ FARL.debugInfo = function(self)
         self:print("calcDir: " .. self.locomotive.orientation * 8)
         self:print("calcDirRound: " .. round(self.locomotive.orientation * 8, 0))
         --self:show_path()
-        local bulldoze_rail = self.frontmover and self.train.back_rail or self.train.front_rail
+        local bulldoze_rail = self.frontmover and self.train.back_end.rail or self.train.front_end.rail
         self:flyingText("B", GREEN, true, bulldoze_rail.position)
-        local rail = self.train.front_rail
+        local rail = self.train.front_end.rail
         if rail then
             --self:flyingText2("B", GREEN, true, rail.position)
             self:print("Rail@" .. Position.tostring(rail.position) .. " dir:" .. rail.direction)
@@ -2899,7 +2898,7 @@ FARL.debugInfo = function(self)
     end
 end
 
-FARL.calcTrainDir = function(self, ent)
+FART.calcTrainDir = function(self, ent)
     --local r = (self.locomotive.orientation > 0.99 and self.locomotive.orientation < 1) and 0 or self.locomotive.orientation
     if not ent then
         return round(self.locomotive.orientation * 8, 0) --math.floor(r * 8)
@@ -2908,15 +2907,15 @@ FARL.calcTrainDir = function(self, ent)
     end
 end
 
-FARL.rail_below_train = function(self)
-    return self.frontmover and self.train.front_rail or self.train.back_rail
+FART.rail_below_train = function(self)
+    return self.frontmover and self.train.front_end.rail or self.train.back_end.rail
 end
 
-FARL.rail_behind_train = function(self)
-    return self.frontmover and self.train.back_rail or self.train.front_rail
+FART.rail_behind_train = function(self)
+    return self.frontmover and self.train.back_end.rail or self.train.front_end.rail
 end
 
-FARL.get_connected_rail = function(self, rail, straight_only, travelDir)
+FART.get_connected_rail = function(self, rail, straight_only, travelDir)
     local dirs = { 1, 0, 2 }
     local ret = false
     if straight_only then
@@ -2934,7 +2933,7 @@ FARL.get_connected_rail = function(self, rail, straight_only, travelDir)
     return ret
 end
 
-FARL.getConnectedGhostRail = function(self, rail, travelDir, straight_only)
+FART.getConnectedGhostRail = function(self, rail, travelDir, straight_only)
     local dirs = { 1, 0, 2 }
     local ret = false
     if straight_only then
@@ -2959,7 +2958,7 @@ FARL.getConnectedGhostRail = function(self, rail, travelDir, straight_only)
     return ret
 end
 
-FARL.print_out_of_item = function(self, item)
+FART.print_out_of_item = function(self, item)
     local tick = game.tick
     if not self.last_message[item] or tick >= self.last_message[item] then
         local name = (game.entity_prototypes[item] and game.entity_prototypes[item].localised_name)
@@ -2971,18 +2970,18 @@ FARL.print_out_of_item = function(self, item)
     end
 end
 
-FARL.print = function(self, msg, color)
-    if self.driver and self.driver.name ~= "farl_player" then
+FART.print = function(self, msg, color)
+    if self.driver and self.driver.name ~= "fart_player" then
         self.driver.print( msg )
     elseif self.startedBy and self.startedBy.valid then
         local loco_name = (self.locomotive and self.locomotive.valid) and self.locomotive.backer_name or ''
-        self.startedBy.print( { "", "FARL '", loco_name,"': ",msg } )
+        self.startedBy.print( { "", "FART '", loco_name,"': ",msg } )
     else
         self:flyingText( msg, color or RED, true )
     end
 end
 
-FARL.flyingText = function(self, line, color, show, pos)
+FART.flyingText = function(self, line, color, show, pos)
     if show then
         if self.locomotive and self.locomotive.valid then
             pos = pos or Position.add(self.locomotive.position, { x = 0, y = -1 })
@@ -2994,7 +2993,7 @@ FARL.flyingText = function(self, line, color, show, pos)
     end
 end
 
-FARL.flyingText2 = function(self, line, color, show, pos)
+FART.flyingText2 = function(self, line, color, show, pos)
     if show then
         pos = pos and Position.add(pos, { x = -0.5, y = -0.5 }) or Position.add(self.locomotive.position, { x = 0, y = -1 })
         color = color or RED
@@ -3002,16 +3001,16 @@ FARL.flyingText2 = function(self, line, color, show, pos)
     end
 end
 
-FARL.create_overlay = function(self, position, duration)
+FART.create_overlay = function(self, position, duration)
     local tick = game.tick + 60 * duration
-    global.overlayStack[tick] = global.overlayStack[tick] or {}
-    local overlay = self.surface.create_entity { name = "farl_overlay", position = position }
+    storage.overlayStack[tick] = storage.overlayStack[tick] or {}
+    local overlay = self.surface.create_entity { name = "fart_overlay", position = position }
     overlay.minable = false
     overlay.destructible = false
-    table.insert(global.overlayStack[tick], overlay)
+    table.insert(storage.overlayStack[tick], overlay)
 end
 
-FARL.showArea = function(self, rail, direction, area, duration)
+FART.showArea = function(self, rail, direction, area, duration)
     local bb = { tl = area[1], br = area[2] }
     local min_x = min(bb.tl.x, bb.br.x)
     local max_x = max(bb.tl.x, bb.br.x)
@@ -3039,7 +3038,7 @@ FARL.showArea = function(self, rail, direction, area, duration)
     --    end
 end
 
-FARL.showArea2 = function(self, area)
+FART.showArea2 = function(self, area)
     --area[1] = tl, area[2]=br
     debugDump(area, true)
     for x = area[1].x, area[2].x do
@@ -3050,7 +3049,7 @@ FARL.showArea2 = function(self, area)
 end
 
 -- [traveldir][rail_type][rail_dir][input] = offset, new rail dir, new rail type
-FARL.input_to_next_rail =
+FART.input_to_next_rail =
     -- 0 to 4, 2 to 6: switch sign
     {
         -- North/South
@@ -3232,7 +3231,7 @@ FARL.input_to_next_rail =
     }
 
 --clearArea[curveDir%4]
-FARL.clearAreas =
+FART.clearAreas =
     {
         [0] = {
             { { x = -2.5, y = -3.5 }, { x = 0.5, y = 0.5 } },

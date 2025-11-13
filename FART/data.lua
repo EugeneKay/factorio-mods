@@ -1,15 +1,15 @@
-local copyPrototype = require "__FARL__/lib"
+local copyPrototype = require "__FART__/lib"
 
-require("__FARL__/prototypes/equipment")
-require("__FARL__/prototypes/entity/entities")
+require("__FART__/prototypes/equipment")
+require("__FART__/prototypes/entity/entities")
 
-require("__FARL__/prototypes/item/item")
-require("__FARL__/prototypes/recipe/recipe")
-require("__FARL__/prototypes/styles")
+require("__FART__/prototypes/item/item")
+require("__FART__/prototypes/recipe/recipe")
+require("__FART__/prototypes/styles")
 
-local player = copyPrototype("character", "character", "farl_player")
+local player = copyPrototype("character", "character", "fart_player")
 player.healing_per_tick = 100
-player.collision_mask = {"ghost-layer"}
+player.collision_mask = { layers = {ghost=true} }
 player.inventory_size = 0
 player.build_distance = 0
 player.drop_item_distance = 0
@@ -35,12 +35,12 @@ end
 data:extend{
     {
         type = "custom-input",
-        name = "farl-toggle-cruise-control",
+        name = "fart-toggle-cruise-control",
         key_sequence = "SHIFT + C"
     },
     {
         type = "custom-input",
-        name = "farl-toggle-active",
+        name = "fart-toggle-active",
         key_sequence = "",
     }
 }

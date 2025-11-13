@@ -1,16 +1,16 @@
-local copyPrototype = require "__FARL__/lib"
-local farl = copyPrototype("locomotive", "locomotive", "farl")
-farl.icon = "__FARL__/graphics/icons/farl.png"
-farl.icon_size = 32
-farl.icon_mipmaps = 0
-farl.max_speed = 0.8
-farl.burner.fuel_inventory_size = 4
+local copyPrototype = require "__FART__/lib"
+local fart = copyPrototype("locomotive", "locomotive", "fart")
+fart.icon = "__FART__/graphics/icons/fart.png"
+fart.icon_size = 32
+fart.icon_mipmaps = 0
+fart.max_speed = 0.8
+--fart.burner.fuel_inventory_size = 4
 
-farl.color = {r = 1, g = 0.80, b = 0, a = 0.8}
---farl.color = {r = 0.8, g = 0.40, b = 0, a = 0.8}
-data:extend({farl})
+fart.color = {r = 1, g = 0.80, b = 0, a = 0.8}
+--fart.color = {r = 0.8, g = 0.40, b = 0, a = 0.8}
+data:extend({fart})
 
-data:extend({
+--[[data:extend({
     {
         type = "flying-text",
         name = "flying-text2",
@@ -18,3 +18,4 @@ data:extend({
         time_to_live = 150,
         speed = 0.0
     }})
+--]]

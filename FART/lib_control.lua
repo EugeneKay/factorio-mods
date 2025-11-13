@@ -1,11 +1,11 @@
-local Position = require '__FARL__/stdlib/area/position'
+local Position = require '__FART__/stdlib/area/position'
 
 local M = {}
 
 function M.saveVar(var, name)
     var = var or global
     local n = name or ""
-    game.write_file("farl/farl"..n..".lua", serpent.block(var, {name="glob"}))
+    game.write_file("fart/fart"..n..".lua", serpent.block(var, {name="glob"}))
 end
 
 function M.debugDump(var, force)

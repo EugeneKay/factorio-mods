@@ -1,4 +1,4 @@
-local lib = require "__FARL__/lib_control"
+local lib = require "__FART__/lib_control"
 local saveVar = lib.saveVar
 local debugDump = lib.debugDump
 local startsWith = lib.startsWith
@@ -38,7 +38,7 @@ GUI = {
         {"stg-ccNetWire-both"}
     },
 
-    styleprefix = "farl_",
+    styleprefix = "fart_",
 
     defaultStyles = {
         label = "label",
@@ -128,11 +128,11 @@ GUI = {
     end,
 
     createGui = function(player)
-        if mod_gui.get_frame_flow(player).farl ~= nil then return end
+        if mod_gui.get_frame_flow(player).fart ~= nil then return end
         local psettings = Settings.loadByPlayer(player)
         --GUI.init(player)
-        local farl = GUI.add(mod_gui.get_frame_flow(player), {type="frame", direction="vertical", name="farl"})
-        local rows = GUI.add(farl, {type="table", name="rows", column_count=1})
+        local fart = GUI.add(mod_gui.get_frame_flow(player), {type="frame", direction="vertical", name="fart"})
+        local rows = GUI.add(fart, {type="table", name="rows", column_count=1})
         local span = 3
 
         local buttons = GUI.add(rows, {type="table", name="buttons", column_count=span})
@@ -145,14 +145,14 @@ GUI = {
         progressBar.visible = false
         local progressLabel = GUI.addLabel(rows,{caption="", name = "pathLabel"})
         progressLabel.visible = false
-        GUI.add(rows, {type = "flow", direction="vertical", name = "farlConfirm"})
+        GUI.add(rows, {type = "flow", direction="vertical", name = "fartConfirm"})
 
         GUI.add(rows, {type="checkbox", name="signals", caption={"tgl-signal"}}, "signals")
         GUI.add(rows, {type="checkbox", name="poles", caption={"tgl-poles"}}, "poles")
         GUI.add(rows, {type="checkbox", name="concrete", caption={"tgl-concrete"}}, "concrete")
-        GUI.add(rows,{type="checkbox", name="bulldozer", caption={"tgl-bulldozer"}, state=psettings.bulldozer, tooltip={"farl_tooltip_bulldozer"}})
-        GUI.add(rows,{type="checkbox", name="maintenance", caption={"tgl-maintenance"}, state=psettings.maintenance, tooltip={"farl_tooltip_maintenance"}})
-        GUI.add(rows, {type="checkbox", name="bridge", caption={"tgl-bridge"}, tooltip={"farl_tooltip_bridge"}}, "bridge")
+        GUI.add(rows,{type="checkbox", name="bulldozer", caption={"tgl-bulldozer"}, state=psettings.bulldozer, tooltip={"fart_tooltip_bulldozer"}})
+        GUI.add(rows,{type="checkbox", name="maintenance", caption={"tgl-maintenance"}, state=psettings.maintenance, tooltip={"fart_tooltip_maintenance"}})
+        GUI.add(rows, {type="checkbox", name="bridge", caption={"tgl-bridge"}, tooltip={"fart_tooltip_bridge"}}, "bridge")
     end,
 
     --  createAutopilotGui = function(entity, player)
@@ -164,8 +164,8 @@ GUI = {
     --  end,
 
     createPopup = function(player)
-        if mod_gui.get_frame_flow(player).farl then
-            local gui = GUI.add(mod_gui.get_frame_flow(player).farl.rows.farlConfirm, {type = "frame", direction="vertical", name = "farlConfirmFlow"})
+        if mod_gui.get_frame_flow(player).fart then
+            local gui = GUI.add(mod_gui.get_frame_flow(player).fart.rows.fartConfirm, {type = "frame", direction="vertical", name = "fartConfirmFlow"})
             GUI.addLabel(gui, {caption="Ghost rails detected, start Autopilot?"})
             GUI.add(gui, {type = "checkbox", name = "autoPilot", caption="Drive without me", state = false})
             local flow = GUI.add(gui, {type="flow", direction="horizontal", name="buttonFlow"})
@@ -176,35 +176,35 @@ GUI = {
 
     destroyGui = function(player)
         if player.valid then
-            if mod_gui.get_frame_flow(player).farl == nil then return end
-            mod_gui.get_frame_flow(player).farl.destroy()
+            if mod_gui.get_frame_flow(player).fart == nil then return end
+            mod_gui.get_frame_flow(player).fart.destroy()
         end
     end,
 
-    onGuiClick = function(event, farl, player)
+    onGuiClick = function(event, fart, player)
         local name = event.element.name
         if GUI.callbacks[name] then
-            return GUI.callbacks[name](event, farl, player)
+            return GUI.callbacks[name](event, fart, player)
         end
         if name == "debug" then
             saveVar(global,"debug")
-            farl:debugInfo()
+            fart:debugInfo()
         elseif startsWith(name,"load_bp_") then
             local i = name:match("load_bp_(%w*)")
-            GUI.load_bp(event,farl, player,tonumber(i))
+            GUI.load_bp(event,fart, player,tonumber(i))
         elseif startsWith(name,"save_bp_") then
             local i = name:match("save_bp_(%w*)")
-            GUI.save_bp(event,farl, player,tonumber(i))
+            GUI.save_bp(event,fart, player,tonumber(i))
         end
     end,
 
-    on_gui_checked_state_changed = function(event, farl, player)
+    on_gui_checked_state_changed = function(event, fart, player)
         local name = event.element.name
         if name == "bulldozer" then
-            return GUI.toggleBulldozer(event, farl, player)
+            return GUI.toggleBulldozer(event, fart, player)
         end
         if name == "maintenance" then
-            return GUI.toggleMaintenance(event, farl, player)
+            return GUI.toggleMaintenance(event, fart, player)
         end
         local psettings = Settings.loadByPlayer(player)
         if name == "signals" or name == "poles" or name == "ccNet" or name == "flipPoles" or name == "collectWood" or name == "dropWood"
@@ -212,83 +212,83 @@ GUI = {
             or name == "signalEveryPole" or name == "place_ghosts" or name == "remove_cliffs" or name == "fullCruise" then
             psettings[name] = not psettings[name]
             if name == "poles" then
-                if psettings[name] and farl.active then
-                    farl:findLastPole()
+                if psettings[name] and fart.active then
+                    fart:findLastPole()
                 end
             end
             if name == "fullCruise" then
-                psettings.cruiseSpeed = psettings.fullCruise and farl.train.max_forward_speed or 0.4
+                psettings.cruiseSpeed = psettings.fullCruise and fart.train.max_forward_speed or 0.4
             end
         elseif name == "bridge" then
             psettings.bridge = not psettings.bridge
         end
     end,
 
-    toggleStart = function(_, farl, _)
-        farl:toggleActive(true)
+    toggleStart = function(_, fart, _)
+        fart:toggleActive(true)
     end,
 
-    debugInfo = function(_, farl, _)
-        farl:debugInfo()
+    debugInfo = function(_, fart, _)
+        fart:debugInfo()
     end,
 
-    confirmYes = function(event, farl, player)
-        farl.confirmed = true
+    confirmYes = function(event, fart, player)
+        fart.confirmed = true
 
-        --kick player out and insert farl_player
+        --kick player out and insert fart_player
         if event.element.parent.parent.autoPilot.state then
             local loco = player.vehicle
-            local farlLoco = farl.locomotive
-            --        if not loco or not isFARLLocomotive(loco) then
-            --          farl:deactivate()
+            local fartLoco = fart.locomotive
+            --        if not loco or not isFARTLocomotive(loco) then
+            --          fart:deactivate()
             --          GUI.destroyGui(player)
             --          return
             --        end
-            if player.vehicle and farlLoco == player.vehicle then
+            if player.vehicle and fartLoco == player.vehicle then
                 player.driving = false
             end
             GUI.destroyGui(player)
-            local ghostPlayer = player.surface.create_entity({name="farl_player", position=player.position, force=player.force})
+            local ghostPlayer = player.surface.create_entity({name="fart_player", position=player.position, force=player.force})
             loco.set_driver(ghostPlayer)
 
-            farl.driver = ghostPlayer
-            farl.settings = util.table.deepcopy(Settings.loadByPlayer(player))
-            farl.startedBy = player
-            farl.cheat_mode = player.cheat_mode
-            global.activeFarls[FARL.getIdFromTrain(farl.train)] = farl
-            farl.direction = farl:calcTrainDir()
-            farl.lastrail = farl:findLastRail()
-            farl.ghostPath = farl:getGhostPath()
+            fart.driver = ghostPlayer
+            fart.settings = util.table.deepcopy(Settings.loadByPlayer(player))
+            fart.startedBy = player
+            fart.cheat_mode = player.cheat_mode
+            global.activeFarls[FART.getIdFromTrain(fart.train)] = fart
+            fart.direction = fart:calcTrainDir()
+            fart.lastrail = fart:findLastRail()
+            fart.ghostPath = fart:getGhostPath()
         end
-        farl:activate()
-        if farl.active then
-            farl:toggleCruiseControl()
+        fart:activate()
+        if fart.active then
+            fart:toggleCruiseControl()
         end
-        farl.confirmed = nil
-        if mod_gui.get_frame_flow(player).farl then
-            mod_gui.get_frame_flow(player).farl.rows.farlConfirm.farlConfirmFlow.destroy()
+        fart.confirmed = nil
+        if mod_gui.get_frame_flow(player).fart then
+            mod_gui.get_frame_flow(player).fart.rows.fartConfirm.fartConfirmFlow.destroy()
         end
     end,
 
-    confirmNo = function(_, farl, player)
-        farl.confirmed = false
-        farl:activate()
-        farl.ghostPath = nil
-        farl.confirmed = nil
-        mod_gui.get_frame_flow(player).farl.rows.farlConfirm.farlConfirmFlow.destroy()
+    confirmNo = function(_, fart, player)
+        fart.confirmed = false
+        fart:activate()
+        fart.ghostPath = nil
+        fart.confirmed = nil
+        mod_gui.get_frame_flow(player).fart.rows.fartConfirm.fartConfirmFlow.destroy()
     end,
 
-    toggleBulldozer = function(_, farl, _)
-        farl:toggleBulldozer()
-        GUI.updateGui(farl)
+    toggleBulldozer = function(_, fart, _)
+        fart:toggleBulldozer()
+        GUI.updateGui(fart)
     end,
 
-    toggleMaintenance = function(_, farl, _)
-        farl:toggleMaintenance()
-        GUI.updateGui(farl)
+    toggleMaintenance = function(_, fart, _)
+        fart:toggleMaintenance()
+        GUI.updateGui(fart)
     end,
 
-    load_bp = function(event, farl, player, i)
+    load_bp = function(event, fart, player, i)
         local index = player.index
         if global.savedBlueprints[index][i] then
             local bps = global.savedBlueprints[index][i]
@@ -296,22 +296,22 @@ GUI = {
             local lanes = #bps.straight.lanes + 1
             local pole = game.entity_prototypes[bps.straight.pole.name].localised_name
             psettings.activeBP = table.deepcopy(global.savedBlueprints[index][i])
-            if farl.active then
-                farl:deactivate()
-                farl:activate()
+            if fart.active then
+                fart:deactivate()
+                fart:activate()
             end
             player.print({"", {"text-blueprint-loaded"}, " ",{"text-blueprint-description", lanes, pole}})
-            GUI.toggleSettingsWindow(event,farl,player)
+            GUI.toggleSettingsWindow(event,fart,player)
         end
     end,
 
-    save_bp = function(event, farl, player, i)
+    save_bp = function(event, fart, player, i)
         local index = player.index
         local psettings = Settings.loadByPlayer(player)
         global.savedBlueprints[index][i] = table.deepcopy(psettings.activeBP)
         player.print({"text-blueprint-saved"})
-        GUI.toggleSettingsWindow(event,farl,player)
-        GUI.toggleSettingsWindow(event,farl,player)
+        GUI.toggleSettingsWindow(event,fart,player)
+        GUI.toggleSettingsWindow(event,fart,player)
     end,
 
     toggleSide = function(event, _, player)
@@ -327,22 +327,22 @@ GUI = {
         end
     end,
 
-    toggleCC = function(_, farl, _)
-        farl:toggleCruiseControl()
+    toggleCC = function(_, fart, _)
+        fart:toggleCruiseControl()
     end,
 
     create_settings_button = function(player, sprite)
-        local buttons = mod_gui.get_frame_flow(player).farl.rows.buttons
+        local buttons = mod_gui.get_frame_flow(player).fart.rows.buttons
         if buttons.settings and buttons.settings.valid then buttons.settings.destroy() end
         if sprite then
-            return GUI.addButton(buttons, {type = "sprite-button", name = "settings", sprite = "farl_settings", style = "farl_button" }, GUI.toggleSettingsWindow)
+            return GUI.addButton(buttons, {type = "sprite-button", name = "settings", sprite = "fart_settings", style = "fart_button" }, GUI.toggleSettingsWindow)
         else
             return GUI.addButton(buttons, {name = "settings", caption = {"text-save"}}, GUI.toggleSettingsWindow)
         end
     end,
 
-    toggleSettingsWindow = function(_, farl, player)
-        local row = mod_gui.get_frame_flow(player).farl.rows
+    toggleSettingsWindow = function(_, fart, player)
+        local row = mod_gui.get_frame_flow(player).fart.rows
         local psettings = Settings.loadByPlayer(player)
         if row.settings ~= nil then
             local s = row.settings
@@ -351,7 +351,7 @@ GUI = {
             local wire = tonumber(s.row3.ccNetWires.selected_index)
             sDistance = sDistance < 0 and 0 or sDistance
             GUI.create_settings_button(player, true)
-            GUI.saveSettings({ signalDistance = sDistance, railType = railType, ccWires = wire }, player, farl)
+            GUI.saveSettings({ signalDistance = sDistance, railType = railType, ccWires = wire }, player, fart)
             row.settings.destroy()
         else
             local settings = row.add({type="table", name="settings", column_count=2})
@@ -364,9 +364,9 @@ GUI = {
             GUI.addPlaceHolder(settings)
 
             GUI.add(settings, {type="label", caption={"stg-signalDistance"}})
-            GUI.add(settings, {type="textfield", name="signalDistance", style="farl_textfield_small"}, psettings.signalDistance)
+            GUI.add(settings, {type="textfield", name="signalDistance", style="fart_textfield_small"}, psettings.signalDistance)
 
-            --GUI.add(settings, {type="checkbox", name="signalEveryPole", caption={"stg-signalEveryPole"}, tooltip={"farl_tooltip_signalEveryPole"}}, "signalEveryPole")
+            --GUI.add(settings, {type="checkbox", name="signalEveryPole", caption={"stg-signalEveryPole"}, tooltip={"fart_tooltip_signalEveryPole"}}, "signalEveryPole")
             --GUI.add(settings, {type="label", caption=""})
 
             GUI.add(settings, {type="label", caption={"stg-railType"}})
@@ -379,11 +379,11 @@ GUI = {
             -- GUI.add(settings, {type="label", caption={"stg-poleSide"}})
             -- GUI.add(settings, {type="checkbox", name="flipPoles", caption={"stg-flipPoles"}, state=psettings.flipPoles})
 
-            GUI.add(settings,{type="checkbox", name="poleEntities", caption={"stg-poleEntities"}, tooltip={"farl_tooltip_place_pole_entities"}},"poleEntities")
-            GUI.add(settings, {type="checkbox", name="remove_cliffs", caption={"stg-remove-cliffs"}, tooltip={ "farl_tooltip_remove_cliffs", {"item-name.cliff-explosives"}}}, "remove_cliffs")
+            GUI.add(settings,{type="checkbox", name="poleEntities", caption={"stg-poleEntities"}, tooltip={"fart_tooltip_place_pole_entities"}},"poleEntities")
+            GUI.add(settings, {type="checkbox", name="remove_cliffs", caption={"stg-remove-cliffs"}, tooltip={ "fart_tooltip_remove_cliffs", {"item-name.cliff-explosives"}}}, "remove_cliffs")
 
-            GUI.add(settings,{type="checkbox", name="railEntities", caption={"stg-rail-entities"}, tooltip={"farl_tooltip_place_walls"}}, "railEntities")
-            GUI.add(settings, { type = "checkbox", name="place_ghosts", caption = {"stg-place-ghosts"}, tooltip={"farl_tooltip_place_ghosts"}}, "place_ghosts")
+            GUI.add(settings,{type="checkbox", name="railEntities", caption={"stg-rail-entities"}, tooltip={"fart_tooltip_place_walls"}}, "railEntities")
+            GUI.add(settings, { type = "checkbox", name="place_ghosts", caption = {"stg-place-ghosts"}, tooltip={"fart_tooltip_place_ghosts"}}, "place_ghosts")
 
             GUI.add(settings, {type="checkbox", name="mirrorConcrete", caption= {"stg-mirror-concrete"}, "mirrorConcrete"})
             GUI.addPlaceHolder(settings)
@@ -402,18 +402,18 @@ GUI = {
                     local lanes = #bps[i].straight.lanes + 1
                     local pole = game.entity_prototypes[bps[i].straight.pole.name].localised_name
                     GUI.addButton(stored_bp,{name="load_bp_"..i, caption="L"})
-                    GUI.addButton(stored_bp,{name="save_bp_"..i, caption="S", tooltip = {"farl_tooltip_s_button"}})
+                    GUI.addButton(stored_bp,{name="save_bp_"..i, caption="S", tooltip = {"fart_tooltip_s_button"}})
                     GUI.addLabel(stored_bp, {caption={"text-blueprint-description", lanes, pole}})
                 else
                     GUI.addLabel(stored_bp,{caption="L"})
-                    GUI.addButton(stored_bp,{name="save_bp_"..i, caption="S", tooltip = {"farl_tooltip_s_button"}})
+                    GUI.addButton(stored_bp,{name="save_bp_"..i, caption="S", tooltip = {"fart_tooltip_s_button"}})
                     GUI.addLabel(stored_bp, {caption="--"})
                 end
             end
 
             GUI.add(settings, {type="label", caption={"stg-blueprint"}})
             local row3 = GUI.add(settings, {type="table", name="row4", column_count=2})
-            GUI.addButton(row3, {name="blueprint", caption={"stg-blueprint-read"}, tooltip = {"farl_tooltip_read"}}, GUI.readBlueprint)
+            GUI.addButton(row3, {name="blueprint", caption={"stg-blueprint-read"}, tooltip = {"fart_tooltip_read"}}, GUI.readBlueprint)
             GUI.addButton(row3, {name="bpClear", caption={"stg-blueprint-clear"}}, GUI.clearBlueprints)
             GUI.add(settings, {type="label", caption={"stg-blueprint-write"}})
             local row4 = GUI.add(settings, {type="flow", name="row5", direction="horizontal"})
@@ -447,12 +447,12 @@ GUI = {
             --        return blueprints
     end,
 
-    readBlueprint = function(_, farl, player)
+    readBlueprint = function(_, fart, player)
         local status, err = pcall(function()
             local bp = {}
             local cursor = player.cursor_stack.valid_for_read and player.cursor_stack
             local read_from_cursor, count
-            local read_blueprints = farl.read_blueprints
+            local read_blueprints = fart.read_blueprints
             if cursor and cursor.is_blueprint and cursor.is_blueprint_setup() then
                 table.insert(bp, cursor)
                 read_from_cursor = true
@@ -462,31 +462,31 @@ GUI = {
                 read_from_cursor = true
                 read_blueprints = read_blueprints + count
             else
-                farl:print("Cant read from the quickbar currently. Click the Read button with a blueprint or a blueprint book.")
-                farl:print("(Reading from the quickbar will be reenabled as soon as the API allows it")
+                fart:print("Cant read from the quickbar currently. Click the Read button with a blueprint or a blueprint book.")
+                fart:print("(Reading from the quickbar will be reenabled as soon as the API allows it")
                 return
                 --bp = GUI.findBlueprintsInHotbar(player, 'setup')
             end
             if #bp > 2 then
-                farl:print({"msg-error-too-many-bps"})
+                fart:print({"msg-error-too-many-bps"})
                 return
             end
             if #bp == 0 then
-                farl:print({ "msg-error-no-blueprint" })
+                fart:print({ "msg-error-no-blueprint" })
                 return
             end
-            local was_active = farl.active
-            farl:deactivate()
-            farl:parseBlueprints(bp)
+            local was_active = fart.active
+            fart:deactivate()
+            fart:parseBlueprints(bp)
             if not read_from_cursor or read_blueprints == 2 then
                 read_blueprints = 0
                 GUI.destroyGui(player)
                 GUI.createGui(player)
             end
             if was_active then
-                farl:activate()
+                fart:activate()
             end
-            farl.read_blueprints = read_blueprints
+            fart.read_blueprints = read_blueprints
             return
         end)
         if not status then
@@ -494,24 +494,24 @@ GUI = {
         end
     end,
 
-    clearBlueprints = function(_, farl, player)
+    clearBlueprints = function(_, fart, player)
         local psettings = Settings.loadByPlayer(player)
         psettings.bp = {diagonal=defaultsDiagonal, straight=defaultsStraight}
         psettings.activeBP = psettings.bp
-        farl:print({"msg-bp-cleared"})
+        fart:print({"msg-bp-cleared"})
         GUI.destroyGui(player)
         GUI.createGui(player)
     end,
 
-    create_concrete_vertical = function(_, farl, player)
-        GUI.createBlueprint(defaults_concrete_vert,farl,player)
+    create_concrete_vertical = function(_, fart, player)
+        GUI.createBlueprint(defaults_concrete_vert,fart,player)
     end,
 
-    create_concrete_diagonal = function(_, farl, player)
-        GUI.createBlueprint(defaults_concrete_diag,farl,player)
+    create_concrete_diagonal = function(_, fart, player)
+        GUI.createBlueprint(defaults_concrete_diag,fart,player)
     end,
 
-    print_statistics = function(event, farl, player)
+    print_statistics = function(event, fart, player)
         if player.valid then
             local stats = global.statistics[player.force.name]
             player.print({"stg-statistics"})
@@ -533,17 +533,17 @@ GUI = {
                     player.print(n..": "..c)
                 end
             end
-            GUI.toggleSettingsWindow(event, farl, player)
+            GUI.toggleSettingsWindow(event, fart, player)
         end
     end,
 
-    createBlueprint = function(bp_table, farl, player)
+    createBlueprint = function(bp_table, fart, player)
         local cursor = player.cursor_stack.valid_for_read and player.cursor_stack
         local blueprints = {}
         if cursor and cursor.type == "blueprint" then
             table.insert(blueprints, cursor)
         else
-            farl:print("Click this button with an empty blueprint")
+            fart:print("Click this button with an empty blueprint")
             --blueprints = GUI.findBlueprintsInHotbar(player, 'empty')
             return
         end
@@ -551,20 +551,20 @@ GUI = {
             local bp = blueprints[1]
             bp.set_blueprint_entities(bp_table.entities)
             bp.set_blueprint_tiles(bp_table.tiles)
-            local icons = {[1]={index = 1, signal={name = "rail", type="item"}},[2]={index = 2, signal={name = "farl", type="item"}}}
+            local icons = {[1]={index = 1, signal={name = "rail", type="item"}},[2]={index = 2, signal={name = "fart", type="item"}}}
             bp.blueprint_icons = icons
         else
-            farl:print({"msg-no-empty-blueprint"})
+            fart:print({"msg-no-empty-blueprint"})
         end
     end,
 
-    saveSettings = function(s, player, farl)
+    saveSettings = function(s, player, fart)
         local psettings = Settings.loadByPlayer(player)
         for i,p in pairs(s) do
             if psettings[i] ~= nil then
                 if i == "railType" then
                     if p ~= psettings[i] then
-                        farl:deactivate()
+                        fart:deactivate()
                     end
                         psettings[i] = p
                         psettings.rail = global.rails_by_index[p]
@@ -575,30 +575,30 @@ GUI = {
         end
     end,
 
-    updateGui = function(farl)
-        local guiPlayer = (farl.driver and farl.driver.name ~= "farl_player") and farl.driver or false
-        if guiPlayer and mod_gui.get_frame_flow(guiPlayer).farl then
-            --GUI.init(farl.driver)
-            local farlGui = mod_gui.get_frame_flow(guiPlayer).farl.rows
-            farlGui.buttons.start.caption = farl.active and {"text-stop"} or {"text-start"}
-            farlGui.buttons.cc.caption = farl.cruise and {"text-stopCC"} or {"text-startCC"}
-            if farl.ghostProgress then
-                farlGui.pathProgress.visible = true
-                farlGui.pathProgress.value = farl.ghostProgress / farl.ghostProgressStart
-                farlGui.pathLabel.visible = true
-                farlGui.pathLabel.caption = farl.ghostProgress .. "/" .. farl.ghostProgressStart
+    updateGui = function(fart)
+        local guiPlayer = (fart.driver and fart.driver.name ~= "fart_player") and fart.driver or false
+        if guiPlayer and mod_gui.get_frame_flow(guiPlayer).fart then
+            --GUI.init(fart.driver)
+            local fartGui = mod_gui.get_frame_flow(guiPlayer).fart.rows
+            fartGui.buttons.start.caption = fart.active and {"text-stop"} or {"text-start"}
+            fartGui.buttons.cc.caption = fart.cruise and {"text-stopCC"} or {"text-startCC"}
+            if fart.ghostProgress then
+                fartGui.pathProgress.visible = true
+                fartGui.pathProgress.value = fart.ghostProgress / fart.ghostProgressStart
+                fartGui.pathLabel.visible = true
+                fartGui.pathLabel.caption = fart.ghostProgress .. "/" .. fart.ghostProgressStart
             else
-                farlGui.pathProgress.visible = false
-                farlGui.pathLabel.visible = false
-                farlGui.pathProgress.value = 0
-                farlGui.pathLabel.caption = "-/-"
+                fartGui.pathProgress.visible = false
+                fartGui.pathLabel.visible = false
+                fartGui.pathProgress.value = 0
+                fartGui.pathLabel.caption = "-/-"
             end
 
-            if not farl.settings then
-                farl.settings = Settings.loadByPlayer(guiPlayer)
+            if not fart.settings then
+                fart.settings = Settings.loadByPlayer(guiPlayer)
             end
-            farlGui.bulldozer.state = farl.settings.bulldozer
-            farlGui.maintenance.state = farl.settings.maintenance
+            fartGui.bulldozer.state = fart.settings.bulldozer
+            fartGui.maintenance.state = fart.settings.maintenance
         end
     end,
 }

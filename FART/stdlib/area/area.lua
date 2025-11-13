@@ -5,8 +5,8 @@
 -- @see Concepts.BoundingBox
 -- @see Concepts.Position
 
-local fail_if_missing = require '__FARL__/stdlib/core'['fail_if_missing']
-local Position = require '__FARL__/stdlib/area/position'
+local fail_if_missing = require '__FART__/stdlib/core'['fail_if_missing']
+local Position = require '__FART__/stdlib/area/position'
 local math = math
 local ceil, floor = math.ceil, math.floor
 local Area = {}

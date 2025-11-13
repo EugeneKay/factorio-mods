@@ -3,15 +3,15 @@ if not mods["IndustrialRevolution"] then
         {
             {
                 type = "recipe",
-                name = "farl",
-                enabled = "false",
+                name = "fart",
+                enabled = false,
                 ingredients =
                 {
-                    {"locomotive", 1},
-                    {"long-handed-inserter", 2},
-                    {"steel-plate", 5},
+                    {type = "item", name = "locomotive", amount = 1},
+                    {type = "item", name = "long-handed-inserter", amount = 2},
+                    {type = "item", name = "steel-plate", amount = 5},
                 },
-                result = "farl"
+                results = {{type = "item", name = "fart", amount = 1}}
             }
         })
 else
@@ -19,15 +19,15 @@ else
         {
             {
                 type = "recipe",
-                name = "farl",
-                enabled = "false",
+                name = "fart",
+                enabled = false,
                 ingredients =
                 {
-                    {"locomotive", 1},
-                    {"long-handed-inserter", 2},
-                    {"iron-plate-heavy", 5},
+                    {type = "item", name = "locomotive", amount = 1},
+                    {type = "item", name = "long-handed-inserter", amount = 2},
+                    {type = "item", name = "iron-plate-heavy", amount = 5},
                 },
-                result = "farl"
+                {{type = "item", name = "fart", amount = 1}}
             }
         })
 end

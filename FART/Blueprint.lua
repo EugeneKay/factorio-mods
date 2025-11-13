@@ -2,8 +2,8 @@
 --@module Blueprint
 
 local Blueprint = {}
-local Position = require '__FARL__/stdlib/area/position'
---local saveVar = require '__FARL__/lib_control.lua'['saveVar']
+local Position = require '__FART__/stdlib/area/position'
+--local saveVar = require '__FART__/lib_control.lua'['saveVar']
 local math = math
 local diagonal_to_real_pos = require("lib_control").diagonal_to_real_pos
 

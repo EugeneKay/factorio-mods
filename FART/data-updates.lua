@@ -1,17 +1,17 @@
-local tech_name = "rail-signals"
+local tech = data.raw.technology["automated-rail-transportation"]
 if mods["IndustrialRevolution"] then
     tech_name = "automated-rail-transportation"
 end
 
-table.insert(data.raw["technology"][tech_name].effects,
+table.insert(tech.effects,
     {
         type="unlock-recipe",
-        recipe = "farl"
+        recipe = "fart"
     })
-if settings.startup["farl_enable_module"].value then
-    table.insert(data.raw["technology"][tech_name].effects,
+if settings.startup["fart_enable_module"].value then
+    table.insert(tech.effects,
     {
         type="unlock-recipe",
-        recipe = "farl-roboport"
+        recipe = "fart-roboport"
     })
 end

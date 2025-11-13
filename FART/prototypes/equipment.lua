@@ -1,60 +1,60 @@
-if not settings.startup["farl_enable_module"].value then
+if not settings.startup["fart_enable_module"].value then
     return
 end
-local copyPrototype = require "__FARL__/lib"
+local copyPrototype = require "__FART__/lib"
 data:extend
     {
         {
             type = "equipment-category",
-            name = "farl-equipment"
+            name = "fart-equipment"
         },
         {
             type = "equipment-grid",
-            name = "farl-equipment-grid",
+            name = "fart-equipment-grid",
             width = 2,
             height = 2,
-            equipment_categories = {"farl-equipment"},
+            equipment_categories = {"fart-equipment"},
         },--[[
     {
       type = "equipment-grid",
-      name = "farl-equipment-grid-wagon",
+      name = "fart-equipment-grid-wagon",
       width = 8,
       height = 8,
-      equipment_categories = {"farl-equipment", "armor"},
+      equipment_categories = {"fart-equipment", "armor"},
     },]]--
 }
 
-local farlRoboport =  copyPrototype("roboport-equipment", "personal-roboport-equipment", "farl-roboport", true)
-farlRoboport.energy_consumption = nil
---farlRoboport.robot_limit = 50
-farlRoboport.robot_limit = 0
-farlRoboport.charging_station_count = 0
---farlRoboport.construction_radius = 30
-farlRoboport.construction_radius = 0
-farlRoboport.categories = {"farl-equipment"}
+local fartRoboport =  copyPrototype("roboport-equipment", "personal-roboport-equipment", "fart-roboport", true)
+fartRoboport.energy_consumption = nil
+--fartRoboport.robot_limit = 50
+fartRoboport.robot_limit = 0
+fartRoboport.charging_station_count = 0
+--fartRoboport.construction_radius = 30
+fartRoboport.construction_radius = 0
+fartRoboport.categories = {"fart-equipment"}
 
-local farlRoboportRecipe = copyPrototype("recipe", "personal-roboport-equipment", "farl-roboport", true)
+local fartRoboportRecipe = copyPrototype("recipe", "personal-roboport-equipment", "fart-roboport", true)
 
 if not mods["IndustrialRevolution"] then
-    farlRoboportRecipe.ingredients = {
-        {"iron-gear-wheel", 5},
-        {"electronic-circuit", 5},
-        {"steel-plate", 5},
+    fartRoboportRecipe.ingredients = {
+        {type = "item", name = "iron-gear-wheel", amount = 5},
+        {type = "item", name = "electronic-circuit", amount = 5},
+        {type = "item", name = "steel-plate", amount = 5},
     }
 else
-    farlRoboportRecipe.ingredients = {
-        {"iron-gear-wheel", 5},
-        {"electronic-circuit", 5},
-        {"iron-plate-heavy", 5},
+    fartRoboportRecipe.ingredients = {
+        {type = "item", name = "iron-gear-wheel", amount = 5},
+        {type = "item", name = "electronic-circuit", amount = 5},
+        {type = "item", name = "iron-plate-heavy", amount = 5},
     }
 end
 
 
-local farlRoboportItem = copyPrototype("item", "personal-roboport-equipment", "farl-roboport", true)
-farlRoboportItem.subgroup = "train-transport"
-farlRoboportItem.order = "a[train-system]-j[farl]"
-farlRoboportItem.icon = "__FARL__/graphics/icons/farl-roboport.png"
-farlRoboportItem.icon_size = 32
-farlRoboportItem.icon_mipmaps = 0
+local fartRoboportItem = copyPrototype("item", "personal-roboport-equipment", "fart-roboport", true)
+fartRoboportItem.subgroup = "train-transport"
+fartRoboportItem.order = "a[train-system]-j[fart]"
+fartRoboportItem.icon = "__FART__/graphics/icons/fart-roboport.png"
+fartRoboportItem.icon_size = 32
+fartRoboportItem.icon_mipmaps = 0
 
-data:extend{farlRoboport, farlRoboportItem, farlRoboportRecipe}
+data:extend{fartRoboport, fartRoboportItem, fartRoboportRecipe}

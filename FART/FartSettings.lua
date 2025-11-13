@@ -186,11 +186,11 @@ Settings = {--luacheck: allow defined top
     loadByPlayer = function(player)
         local index = player.index
         local settings = util.table.deepcopy(defaultSettings)
-        if not global.players[index] then
-            global.players[index] = settings
+        if not storage.players[index] then
+            storage.players[index] = settings
         end
-        setmetatable(global.players[index], Settings)
-        return global.players[index]
+        setmetatable(storage.players[index], Settings)
+        return storage.players[index]
     end,
 
     update = function(self, key, value)
@@ -208,7 +208,7 @@ Settings = {--luacheck: allow defined top
         self.wooden = nil
         if not self.railType then
             self.railType = 1
-            self.rail = global.rails_by_index[1]
+            self.rail = storage.rails_by_index[1]
         end
     end
 }

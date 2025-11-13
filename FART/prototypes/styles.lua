@@ -2,65 +2,65 @@ data:extend(
     {
         {
             type = "font",
-            name = "farl-small",
+            name = "fart-small",
             from = "default",
             size = 13
         },
         {
             type ="font",
-            name = "farl-small-bold",
+            name = "fart-small-bold",
             from = "default-bold",
             size = 13
         }
     }
 )
 
-data.raw["gui-style"].default["farl_label"] =
+data.raw["gui-style"].default["fart_label"] =
     {
         type = "label_style",
-        font = "farl-small",
+        font = "fart-small",
         font_color = {r=1, g=1, b=1},
         top_padding = 0,
         bottom_padding = 0
     }
 
-data.raw["gui-style"].default["farl_textfield"] =
+data.raw["gui-style"].default["fart_textfield"] =
     {
         type = "textbox_style",
         left_padding = 3,
         right_padding = 2,
         minimal_width = 60,
-        font = "farl-small"
+        font = "fart-small"
     }
 
-data.raw["gui-style"].default["farl_textfield_small"] =
+data.raw["gui-style"].default["fart_textfield_small"] =
     {
         type = "textbox_style",
         left_padding = 3,
         right_padding = 2,
         minimal_width = 30,
-        font = "farl-small"
+        font = "fart-small"
     }
-data.raw["gui-style"].default["farl_button"] =
+data.raw["gui-style"].default["fart_button"] =
     {
         type = "button_style",
         parent = "button",
-        font = "farl-small-bold",
+        font = "fart-small-bold",
         minimal_height = 33,
         minimal_width = 33,
     }
-data.raw["gui-style"].default["farl_checkbox"] =
+data.raw["gui-style"].default["fart_checkbox"] =
     {
         type = "checkbox_style",
         parent = "checkbox",
-        font = "farl-small",
+        font = "fart-small",
     }
 
 data:extend({
     {
         type="sprite",
-        name="farl_settings",
-        filename = "__FARL__/graphics/icons/settings.png",
+        name="fart_settings",
+        filename = "__FART__/graphics/icons/settings.png",
         priority = "extra-high",
         width = 64,
         height = 64,
